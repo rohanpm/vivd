@@ -46,7 +46,6 @@
         uri-parts   (str/split uri #"/" 3)
         [_ id rest] uri-parts]
     (assert (not (nil? id)))
-    (assert (not (nil? rest)))
     (merge request {:container-vivd-id id
                     :container-uri rest})))
 

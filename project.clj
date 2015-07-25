@@ -8,4 +8,6 @@
                  [org.clojure/data.json "0.2.6"]
                  [org.clojure/core.cache "0.6.4"]
                  [org.clojure/core.typed "0.3.8"]
+                 [com.ninjudd/ring-async "0.2.0"]
+                 [clj-http "2.0.0"]
                  [log4j/log4j "1.2.17"]])

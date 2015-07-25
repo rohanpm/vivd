@@ -85,7 +85,7 @@
 (ann ^:no-check clojure.edn/read
      [java.io.PushbackReader -> Any])
 
-(ann ^:no-check ring.adapter.jetty/run-jetty
+(ann ^:no-check ring.adapter.jetty-async/run-jetty-async
      [RingHandler (HMap) -> Any])
 
 (ann ^:no-check ring.middleware.reload/wrap-reload
