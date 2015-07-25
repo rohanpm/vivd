@@ -27,12 +27,24 @@
     :throw-exceptions false}
    (select-keys request [:query-string :request-method :body])))
 
-(defn proxy-to-container [request :- ContainerRequest] :- RingResponse
+(defn try-request [config inspect request]
+  (loop [attempt 0]
+    (or (try
+          (http/request request)
+          (catch Exception e
+            (if (> attempt 5)
+              (throw e))
+            (log/debug "no response - will retry" attempt e)
+            (Thread/sleep 500)
+            nil))
+        (recur (inc attempt)))))
+
+(defn proxy-to-container [config request]
   "Proxy an HTTP request to the container with the given id"
   (let [c       (container/load-info (:container-vivd-id request))
         inspect (container/ensure-started c)
         req     (get-proxy-request request inspect)
         _       (log/debug "proxy request" req)
-        resp    (http/request req)
+        resp    (try-request config inspect req)
         _       (log/debug "remote response" resp)]
     resp))

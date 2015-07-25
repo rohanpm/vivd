@@ -6,6 +6,7 @@
             [clojure.data.json :as json]
             [vivd.logging :as log]
             [vivd.types :refer :all]
+            [vivd.utils :refer :all]
             [clojure.core.cache :as cache]
             [clojure.core.typed :refer [ann typed-deps Any defalias tc-ignore let]]))
 
@@ -45,10 +46,7 @@
 
 (ann reader-for-info [String -> java.io.PushbackReader])
 (defn- reader-for-info ^java.io.PushbackReader [id]
-  (->> id
-       (io/file (datadir))
-       (io/reader)
-       (java.io.PushbackReader.)))
+  (reader-for-file (datadir) id))
 
 (ann sh! [String Any * -> ShellResult])
 (defn sh! [cmd & args]
@@ -106,7 +104,7 @@
   (let [did     (:docker-id c)
         inspect (docker-inspect did)
         _       (log/debug "inspect " inspect)
-        running (get-in inspect [0 "State" "Running"])]
+        running (get-in inspect [:State :Running])]
     (if (not running)
       (do
         (log/info "Starting:" did)

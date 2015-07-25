@@ -49,18 +49,16 @@
     (merge request {:container-vivd-id id
                     :container-uri rest})))
 
-(ann proxy-handler RingHandler)
-(defn- proxy-handler [request]
-  (-> request
+(defn- proxy-handler [config request]
+  (->> request
       (augmented-proxy-request)
-      (proxy/proxy-to-container)))
+      (proxy/proxy-to-container config)))
 
-(ann handler RingHandler)
-(defn handler [request]
+(defn handler [config request]
   "Top-level handler for all HTTP requests"
   (let [^String uri (:uri request)]
     (log/debug uri)
     (cond
      (= uri "/")       (index-handler request)
      (= uri "/create") (create-handler request)
-     :else             (proxy-handler request))))
+     :else             (proxy-handler config request))))
