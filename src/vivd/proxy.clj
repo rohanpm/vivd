@@ -4,6 +4,8 @@
             [clojure.core
              [typed :refer [typed-deps defn]]]
             [clj-http.client :as http]
+            clj-time.format
+            [clj-time.core :as time]
             [vivd
              [container :as container]
              [logging :as log]
@@ -27,17 +29,33 @@
     :throw-exceptions false}
    (select-keys request [:query-string :request-method :body])))
 
+(defn started-time [inspect]
+  (let [timestr (get-in inspect [:State :StartedAt])]
+    (clj-time.format/parse timestr)))
+
 (defn try-request [config inspect request]
-  (loop [attempt 0]
-    (or (try
-          (http/request request)
-          (catch Exception e
-            (if (> attempt 5)
-              (throw e))
-            (log/debug "no response - will retry" attempt e)
-            (Thread/sleep 500)
-            nil))
-        (recur (inc attempt)))))
+  (let [continue?
+        (fn []
+          (let [started (started-time inspect)
+                _       (log/debug "container started at " started)
+                timeout (:startup-timeout config)
+                timeout (time/seconds timeout)
+                deadline (time/plus- started timeout)
+                _       (log/debug "deadline" deadline)
+                now     (time/now)
+                continue (time/after? deadline now)
+                _        (log/debug "continue" continue)]
+            continue))]
+    (loop []
+      (or (try
+            (http/request request)
+            (catch Exception e
+              (if (not (continue?))
+                (throw e))
+              (log/debug "no response - will retry" e)
+              (Thread/sleep 2000)
+              nil))
+          (recur)))))
 
 (defn proxy-to-container [config request]
   "Proxy an HTTP request to the container with the given id"

@@ -99,6 +99,18 @@
                                (cache/through load-info* cache id)))]
     (lookup-container-info newcache id)))
 
+(defn wait-for-network [did]
+  (loop [attempt 0
+         inspect (docker-inspect did)]
+    (if (get-in inspect [:NetworkSettings :Ports :80/tcp 0 :HostPort])
+      inspect
+      (if (> attempt 4)
+        (throw (ex-info (str "No port 80 bound on " did)))
+        (do
+          (Thread/sleep 200)
+          (docker-inspect-evict did)
+          (recur (inc attempt) (docker-inspect did)))))))
+
 (ann ensure-started [ContainerInfo -> DockerInspect])
 (defn ensure-started [c]
   (let [did     (:docker-id c)
@@ -108,6 +120,5 @@
     (if (not running)
       (do
         (log/info "Starting:" did)
-        (docker-start did)
-        (docker-inspect did))
-      inspect)))
+        (docker-start did)))
+    (wait-for-network did)))

@@ -10,4 +10,5 @@
                  [org.clojure/core.typed "0.3.8"]
                  [com.ninjudd/ring-async "0.2.0"]
                  [clj-http "2.0.0"]
-                 [log4j/log4j "1.2.17"]])
+                 [log4j/log4j "1.2.17"]
+                 [clj-time "0.10.0"]])
