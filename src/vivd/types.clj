@@ -43,6 +43,19 @@
 (defalias RingHandler
   [RingRequest -> RingResponse])
 
+(defalias HostIpPort
+  (HMap
+   :mandatory {:HostIp String
+               :HostPort String}
+   :complete? true))
+
+(defalias DockerInspect
+  (HMap
+   :mandatory {:NetworkSettings
+               (HMap :mandatory {:Ports
+                                 (Map String (Vec HostIpPort))})
+               }))
+
 (ann ^:no-check clojure.java.io/reader
      [Any -> java.io.Reader])
 

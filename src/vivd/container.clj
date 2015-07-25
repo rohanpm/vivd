@@ -12,8 +12,6 @@
 (typed-deps vivd.types)
 (set! *warn-on-reflection* true)
 
-(defalias DockerInspect JsonObject)
-
 (def INSPECT-CACHE (atom
                     (tc-ignore
                      (cache/ttl-cache-factory {} :ttl 60000))))
@@ -60,14 +58,21 @@
       (throw (ex-info "command failed" {:result result}))
       result)))
 
-(ann docker-inspect* [String -> JsonObject])
+(ann ^:no-check read-docker-inspect [String -> DockerInspect])
+(tc-ignore
+ (defn- read-docker-inspect [str]
+   (-> str
+       (json/read-str :key-fn keyword)
+       (first))))
+
+(ann docker-inspect* [String -> DockerInspect])
 (defn- docker-inspect* [did]
   (log/debug "DOCKER INSPECT CALLED:" did)
   (->> (sh! (docker) "inspect" did :out-enc "UTF-8")
        :out
-       (json/read-str)))
+       (read-docker-inspect)))
 
-(ann docker-inspect [String -> JsonObject])
+(ann docker-inspect [String -> DockerInspect])
 (defn- docker-inspect [did]
   (let [newcache 
         (swap! INSPECT-CACHE (fn [cache]
@@ -96,7 +101,7 @@
                                (cache/through load-info* cache id)))]
     (lookup-container-info newcache id)))
 
-(ann ensure-started [ContainerInfo -> JsonObject])
+(ann ensure-started [ContainerInfo -> DockerInspect])
 (defn ensure-started [c]
   (let [did     (:docker-id c)
         inspect (docker-inspect did)
