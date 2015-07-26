@@ -8,7 +8,8 @@
             [vivd.types :refer :all]
             [vivd.utils :refer :all]
             [clojure.core.cache :as cache]
-            [clojure.core.typed :refer [ann typed-deps Any defalias tc-ignore let]]))
+            [clojure.core.typed :refer [ann typed-deps Any defalias tc-ignore let]]
+            [clj-time.coerce :as time-coerce]))
 
 (typed-deps vivd.types)
 (set! *warn-on-reflection* true)
@@ -44,9 +45,8 @@
 (defn- docker []
   "docker")
 
-(ann reader-for-info [String -> java.io.PushbackReader])
-(defn- reader-for-info ^java.io.PushbackReader [id]
-  (reader-for-file (datadir) id))
+(defn- reader-for-info ^java.io.PushbackReader [file-arg]
+  (reader-for-file file-arg))
 
 (ann sh! [String Any * -> ShellResult])
 (defn sh! [cmd & args]
@@ -89,8 +89,14 @@
 (ann load-info* [String -> ContainerInfo])
 (defn- load-info* [id]
   (log/debug "READING INFO FOR:" id)
-  (with-open [stream (reader-for-info id)]
-    (read-container-info stream)))
+  (let [file (io/file (datadir) id)]
+    (with-open [stream (reader-for-info file)]
+      (merge
+       (read-container-info stream)
+       {:id        id
+        :timestamp (-> file
+                       (.lastModified)
+                       (time-coerce/from-long))}))))
 
 (ann load-info [String -> ContainerInfo])
 (defn load-info [id]

@@ -2,7 +2,9 @@
   (:require [vivd
              [proxy :as proxy]
              [logging :as log]
-             [types :refer :all]]
+             [types :refer :all]
+             [index :as index]
+             [index-page :as index-page]]
             [ring.util.response :refer :all]
             [clojure.string :as str]
             [clojure.core.typed :refer [typed-deps ann]]))
@@ -18,21 +20,17 @@
       {:status 405
        :body "Method not allowed"})))
 
-(ann index-handler* RingHandler)
-(defn- index-handler* [request]
-  {:status 200
-   :body "not yet implemented"})
+(defn make-index-handler [index-page-ref]
+  (->> (fn [request]
+         {:status 200
+          :headers {"content-type" "text/html"}
+          :body @index-page-ref})
+       (ensuring-method :get)))
 
 (ann create-handler* RingHandler)
 (defn- create-handler* [request]
   {:status 500
    :body "not yet implemented"})
-
-(ann index-handler RingHandler)
-(def ^{:private true} index-handler
-  (->>
-   index-handler*
-   (ensuring-method :get)))
 
 (ann create-handler RingHandler)
 (def ^{:private true} create-handler
@@ -54,11 +52,15 @@
       (augmented-proxy-request)
       (proxy/proxy-to-container config)))
 
-(defn handler [config request]
-  "Top-level handler for all HTTP requests"
-  (let [^String uri (:uri request)]
-    (log/debug uri)
-    (cond
-     (= uri "/")       (index-handler request)
-     (= uri "/create") (create-handler request)
-     :else             (proxy-handler config request))))
+(defn make-handler [config]
+  "Returns a top-level handler for all HTTP requests"
+  (let [index-ref      (index/make)
+        index-page-ref (index-page/make index-ref)
+        index-handler  (make-index-handler index-page-ref)]
+    (fn [request]
+      (let [^String uri (:uri request)]
+        (log/debug uri)
+        (cond
+         (= uri "/")       (index-handler request)
+         (= uri "/create") (create-handler request)
+         :else             (proxy-handler config request))))))
