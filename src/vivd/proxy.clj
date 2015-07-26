@@ -21,12 +21,17 @@
     {:server-name ip
      :server-port (Integer/valueOf port)}))
 
+(defn get-proxy-headers [request]
+  {"x-forwarded-for" (:remote-addr request)
+   "x-forwarded-host" (get-in request [:headers "host"])})
+
 (defn get-proxy-request [request :- ContainerRequest inspect :- DockerInspect] :- RingRequest
   (merge
    (get-host-port inspect)
    {:uri (str "/" (:container-uri request))
     :scheme :http
-    :throw-exceptions false}
+    :throw-exceptions false
+    :headers (get-proxy-headers request)}
    (select-keys request [:query-string :request-method :body])))
 
 (defn started-time [inspect]
