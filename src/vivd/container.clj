@@ -41,6 +41,9 @@
 (defn- datadir []
   "data/containers")
 
+(defn- gitdir []
+  "data/git")
+
 (ann datadir [-> String])
 (defn- docker []
   "docker")
@@ -50,6 +53,7 @@
 
 (ann sh! [String Any * -> ShellResult])
 (defn sh! [cmd & args]
+  (log/debug "sh:" cmd args)
   (let [result (apply sh cmd args)
         exit   (:exit result)]
     (if (not= 0 exit)
@@ -99,11 +103,12 @@
                        (time-coerce/from-long))}))))
 
 (ann load-info [String -> ContainerInfo])
-(defn load-info [id]
+(defn load-info [config id]
   (let [newcache 
         (swap! INFO-CACHE (fn [cache]
                                (cache/through load-info* cache id)))]
-    (lookup-container-info newcache id)))
+    (-> (lookup-container-info newcache id)
+        (merge config))))
 
 (defn wait-for-network [did]
   (loop [attempt 0
@@ -111,7 +116,7 @@
     (if (get-in inspect [:NetworkSettings :Ports :80/tcp 0 :HostPort])
       inspect
       (if (> attempt 4)
-        (throw (ex-info (str "No port 80 bound on " did)))
+        (throw (ex-info (str "No port 80 bound") {:docker-id did}))
         (do
           (Thread/sleep 200)
           (docker-inspect-evict did)
@@ -128,3 +133,58 @@
         (log/info "Starting:" did)
         (docker-start did)))
     (wait-for-network did)))
+
+(defn exists? [{did :docker-id :as c}]
+  (if (lookup-inspect @INSPECT-CACHE did)
+    (let [result (sh (docker) "inspect" did :out-enc "UTF-8")
+          out    (-> result (:out) (json/read-str))
+          code   (:exit result)]
+      (cond
+       (= 0 code) true
+       (= [] out) false
+       :else      (throw (ex-info "docker inspect failed" {:result result})))))
+  nil)
+
+(def GIT-INIT-LOCK (Object.))
+(defn- ensure-git-init []
+  (let [dir (gitdir)
+        file (io/as-file dir)]
+    (if (not (.exists file))
+      (locking GIT-INIT-LOCK
+        (if (not (.exists file))
+          (do
+            (log/info "Initializing" dir)
+            (sh! "git" "init" "--bare" dir)))))))
+
+(defn- have-git-revision? [rev]
+  (->> rev
+       (sh "git" (str "--git-dir=" (gitdir)) "rev-parse")
+       :exit
+       (= 0)))
+
+(defn git! [& args]
+  (apply sh! "git" (str "--git-dir=" (gitdir)) args))
+
+(defn- git-fetch [{:keys [git-url git-ref git-local-ref git-revision]}]
+  (git! "fetch" git-url (str "+" git-ref ":" git-local-ref))
+  (if (not (have-git-revision? git-revision))
+    (throw (ex-info (str "Fetching " git-url " " git-ref " did not provide " git-revision) {}))))
+
+(defn- ensure-git-fetched [{:keys [git-revision] :as c}]
+  (ensure-git-init)
+  (if (have-git-revision? git-revision)
+    (log/debug "already have" git-revision)
+    (git-fetch c)))
+
+(defn build [{:keys [git-url git-ref git-revision id] :as c}]
+  (let [ref (str "refs/container/" id)
+        c   (merge c {:git-local-ref ref})
+        _   (ensure-git-fetched c)]
+    (log/info "pretended to build")))
+
+(defn ensure-built [{did :docker-id :as c}]
+  (if (exists? c)
+    c
+    (build c)))
+
+

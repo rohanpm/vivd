@@ -6,21 +6,21 @@
 
 (set! *warn-on-reflection* true)
 
-(defn- try-load-info [id]
+(defn- try-load-info [config id]
   (try
-    (container/load-info id)
+    (container/load-info config id)
     (catch Exception e
       (log/debug "Ignoring unloadable container" id e)
       nil)))
 
-(defn- read-index []
+(defn- read-index [config]
   (let [container-dir   (io/as-file "data/containers")
         container-files (.listFiles container-dir)
         container-ids   (map #(.getName ^java.io.File %1) container-files)
         _               (log/debug "containers" container-ids)]
-    (doall (keep try-load-info container-ids))))
+    (doall (keep (partial try-load-info config) container-ids))))
 
-(defn make []
+(defn make [config]
   (let [out (agent {})]
-    (send-off out (fn [_] (read-index)))
+    (send-off out (fn [_] (read-index config)))
     out))

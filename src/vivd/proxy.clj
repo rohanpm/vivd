@@ -64,7 +64,8 @@
 
 (defn proxy-to-container [config request]
   "Proxy an HTTP request to the container with the given id"
-  (let [c       (container/load-info (:container-vivd-id request))
+  (let [c       (container/load-info config (:container-vivd-id request))
+        _       (container/ensure-built c)
         inspect (container/ensure-started c)
         req     (get-proxy-request request inspect)
         _       (log/debug "proxy request" req)

@@ -54,7 +54,7 @@
 
 (defn make-handler [config]
   "Returns a top-level handler for all HTTP requests"
-  (let [index-ref      (index/make)
+  (let [index-ref      (index/make config)
         index-page-ref (index-page/make index-ref)
         index-handler  (make-index-handler index-page-ref)]
     (fn [request]
