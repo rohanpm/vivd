@@ -4,7 +4,7 @@
 
 (defalias ContainerInfo
   (HMap
-   :mandatory {:docker-id String}
+   :mandatory {:docker-container-id String}
    :complete? true))
 
 (defalias ShellResult

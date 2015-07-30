@@ -4,7 +4,8 @@
              [logging :as log]
              [types :refer :all]
              [index :as index]
-             [index-page :as index-page]]
+             [index-page :as index-page]
+             [build :as build]]
             [ring.util.response :refer :all]
             [clojure.string :as str]
             [clojure.core.typed :refer [typed-deps ann]]))
@@ -47,20 +48,22 @@
     (merge request {:container-vivd-id id
                     :container-uri rest})))
 
-(defn- proxy-handler [config request]
+(defn- proxy-handler* [config builder request]
   (->> request
       (augmented-proxy-request)
-      (proxy/proxy-to-container config)))
+      (proxy/proxy-to-container config builder)))
 
 (defn make-handler [config]
   "Returns a top-level handler for all HTTP requests"
   (let [index-ref      (index/make config)
         index-page-ref (index-page/make index-ref)
-        index-handler  (make-index-handler index-page-ref)]
+        index-handler  (make-index-handler index-page-ref)
+        builder        (build/builder config)
+        proxy-handler  (partial proxy-handler* config builder)]
     (fn [request]
       (let [^String uri (:uri request)]
         (log/debug uri)
         (cond
          (= uri "/")       (index-handler request)
          (= uri "/create") (create-handler request)
-         :else             (proxy-handler config request))))))
+         :else             (proxy-handler request))))))

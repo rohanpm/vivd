@@ -11,7 +11,7 @@
             :class "container-link"}
            (:id c))
         (br)
-        "Docker: " (:docker-id c))))
+        "Docker: " (:docker-container-id c))))
 
 (defn from-index [index]
   (let [ordered (sort-by :timestamp index)

@@ -62,10 +62,12 @@
               nil))
           (recur)))))
 
-(defn proxy-to-container [config request]
+(defn proxy-to-container [config builder request]
   "Proxy an HTTP request to the container with the given id"
   (let [c       (container/load-info config (:container-vivd-id request))
-        _       (container/ensure-built c)
+        c       (merge c {:builder builder})
+        c       (container/ensure-built c)
+        _       (log/debug "after build" c)
         inspect (container/ensure-started c)
         req     (get-proxy-request request inspect)
         _       (log/debug "proxy request" req)

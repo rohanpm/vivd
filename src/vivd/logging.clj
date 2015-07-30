@@ -9,3 +9,7 @@
 (defmacro debug [& rest]
   `(t/tc-ignore
     (log/debug ~@rest)))
+
+(defmacro error [& rest]
+  `(t/tc-ignore
+    (log/error ~@rest)))
