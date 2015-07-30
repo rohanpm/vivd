@@ -14,7 +14,8 @@
         "Docker: " (:docker-container-id c))))
 
 (defn from-index [index]
-  (let [ordered (sort-by :timestamp index)
+  (let [ordered (vals index)
+        ordered (sort-by :timestamp ordered)
         ordered (reverse ordered)]
     (html
      (head (title "Containers"))

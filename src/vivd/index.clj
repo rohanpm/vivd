@@ -17,8 +17,11 @@
   (let [container-dir   (io/as-file "data/containers")
         container-files (.listFiles container-dir)
         container-ids   (map #(.getName ^java.io.File %1) container-files)
-        _               (log/debug "containers" container-ids)]
-    (doall (keep (partial try-load-info config) container-ids))))
+        _               (log/debug "containers" container-ids)
+        container-data  (keep (partial try-load-info config) container-ids)
+        container-map   (reduce #(merge %1 {(:id %2) %2}) {} container-data)
+        _               (log/info "loaded containers:" container-map)]
+    container-map))
 
 (defn make [config]
   (let [out (agent {})]
