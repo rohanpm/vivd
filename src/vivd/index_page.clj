@@ -28,7 +28,8 @@
     (swap! page-ref (fn [&_]
                       (from-index index)))))
 
-(defn make [index-ref]
-  (let [out (atom (from-index @index-ref))]
+(defn make [index]
+  (let [index-ref (:index-ref index)
+        out       (atom (from-index @index-ref))]
     (add-watch index-ref "index-page-maker" (index-updater out))
     out))

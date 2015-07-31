@@ -20,11 +20,11 @@
     (FileUtils/forceMkdir code-dir)
     (sh! "/bin/sh" "-c" cmd)))
 
-(defn- setup-dockerfile [dirf c]
+(defn- setup-dockerfile [config dirf c]
   (let [dest (io/file dirf "Dockerfile")]
     (with-open [o (io/writer dest)]
-      (.write o (str "FROM " (:docker-source-image c) "\n"))
-      (.write o (str "ADD code/ " (:docker-code-path c) "\n")))))
+      (.write o (str "FROM " (:docker-source-image config) "\n"))
+      (.write o (str "ADD code/ " (:docker-code-path config) "\n")))))
 
 (defn- docker-build [dirf]
   ; this is pretty dumb, but "docker build" doesn't seem to have any
@@ -38,14 +38,14 @@
     (log/debug "docker build - " result)
     built))
 
-(defn- do-build [out c]
+(defn- do-build [config out c]
   (try
     (log/debug "Will build:" c)
     (let [dirf (-> (builddir) (io/file))]
       (FileUtils/forceDelete dirf)
       (FileUtils/forceMkdir dirf)
       (setup-src dirf c)
-      (setup-dockerfile dirf c)
+      (setup-dockerfile config dirf c)
       (->> (docker-build dirf)
            (>!! out)))
     (finally (close! out))))
@@ -54,7 +54,7 @@
   (let [ch (chan 10)]
     (go-loop []
       (try
-        (apply do-build (<! ch))
+        (apply do-build config (<! ch))
         (catch Exception e
           (log/error "Build failed:" e)))
       (recur))

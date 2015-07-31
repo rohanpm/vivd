@@ -12,7 +12,8 @@
             [clojure.core.typed :refer [ann typed-deps Any defalias tc-ignore let]]
             [clojure.core.async :refer [<!!]]
             [clojure.string :refer [trim]]
-            [clj-time.coerce :as time-coerce]))
+            [clj-time.coerce :as time-coerce]
+            clj-time.format))
 
 (typed-deps vivd.types)
 (set! *warn-on-reflection* true)
@@ -20,10 +21,6 @@
 (def INSPECT-CACHE (atom
                     (tc-ignore
                      (cache/ttl-cache-factory {} :ttl 60000))))
-
-(def INFO-CACHE (atom
-                 (tc-ignore
-                  (cache/lru-cache-factory {}))))
 
 (ann ^:no-check lookup-inspect [Any String -> DockerInspect])
 (tc-ignore
@@ -84,26 +81,6 @@
   (docker-inspect-evict did)
   (sh! (docker) "start" did))
 
-(ann load-info* [String -> ContainerInfo])
-(defn- load-info* [id]
-  (log/debug "READING INFO FOR:" id)
-  (let [file (io/file (datadir) id)]
-    (with-open [stream (reader-for-info file)]
-      (merge
-       (read-container-info stream)
-       {:id        id
-        :timestamp (-> file
-                       (.lastModified)
-                       (time-coerce/from-long))}))))
-
-(ann load-info [String -> ContainerInfo])
-(defn load-info [config id]
-  (let [newcache 
-        (swap! INFO-CACHE (fn [cache]
-                               (cache/through load-info* cache id)))]
-    (-> (lookup-container-info newcache id)
-        (merge config))))
-
 (defn wait-for-network [did]
   (loop [attempt 0
          inspect (docker-inspect did)]
@@ -116,15 +93,15 @@
           (docker-inspect-evict did)
           (recur (inc attempt) (docker-inspect did)))))))
 
-(defn create-container [{:keys [docker-image-id docker-http-port] :as c}]
+(defn create-container [{:keys [docker-http-port] :as config} {:keys [docker-image-id] :as c}]
   (let [container-id (-> (sh! "docker" "run" "-d" "-p" (str "127.0.0.1::" docker-http-port) docker-image-id)
                          (:out)
                          (trim))
         _            (log/info "Created container" container-id "from image" docker-image-id)]
     container-id))
 
-(defn ensure-started [{:keys [docker-container-id] :as c}]
-  (let [docker-container-id (or docker-container-id (create-container c))
+(defn ensure-started [config {:keys [docker-container-id] :as c}]
+  (let [docker-container-id (or docker-container-id (create-container config c))
         c                   (merge c {:docker-container-id docker-container-id})
         inspect             (docker-inspect docker-container-id)
         _                   (log/debug "inspect " inspect)
@@ -133,7 +110,8 @@
       (do
         (log/info "Starting:" docker-container-id)
         (docker-start docker-container-id)))
-    (wait-for-network docker-container-id)))
+    (wait-for-network docker-container-id)
+    c))
 
 (defn container-exists? [{:keys [:docker-container-id] :as c}]
   (if (lookup-inspect @INSPECT-CACHE docker-container-id)
@@ -177,12 +155,13 @@
     (log/debug "already have" git-revision)
     (git-fetch c)))
 
-(defn build [{:keys [git-url git-ref git-revision id builder] :as c}]
+(defn build [{:keys [git-url git-ref git-revision id] :as c} builder]
   (let [ref (str "refs/container/" id)
         c   (merge c {:git-local-ref ref :git-dir (gitdir)})
         _   (ensure-git-fetched c)]
     (log/debug "requesting build")
     (let [new-image (<!! (build/request-build builder c))]
+      (assert new-image (str "Container failed to build for " git-revision))
       (log/info "Built image" new-image "for" git-revision)
       new-image)))
 
@@ -193,7 +172,7 @@
         (:exit)
         (= 0))))
 
-(defn ensure-built [{:keys [docker-container-id] :as c}]
+(defn ensure-built [{:keys [docker-container-id] :as c} builder]
   (cond
    ; if a container was created, the image must exist too...
    docker-container-id
@@ -201,4 +180,17 @@
    (image-exists? c)
      c
    :else
-     (merge c {:docker-image-id (build c)})))
+     (merge c {:docker-image-id (build c builder)})))
+
+(defn get-host-port [{:keys [docker-container-id] :as c}]
+  (let [inspect      (docker-inspect docker-container-id)
+        cfg          (get-in inspect [:NetworkSettings :Ports :80/tcp 0])
+        ip           (:HostIp cfg)
+        ^String port (:HostPort cfg)]
+    [ip
+     (Integer/valueOf port)]))
+
+(defn started-time [{:keys [docker-container-id] :as c}]
+  (let [inspect (docker-inspect docker-container-id)
+        timestr (get-in inspect [:State :StartedAt])]
+    (clj-time.format/parse timestr)))

@@ -4,44 +4,35 @@
             [clojure.core
              [typed :refer [typed-deps defn]]]
             [clj-http.client :as http]
-            clj-time.format
             [clj-time.core :as time]
             [vivd
              [container :as container]
              [logging :as log]
+             [index :as index]
              [types :refer :all]]))
 
 (typed-deps vivd.types)
 (set! *warn-on-reflection* true)
 
-(defn get-host-port [inspect :- DockerInspect] :- RingRequest
-  (let [cfg          (get-in inspect [:NetworkSettings :Ports :80/tcp 0])
-        ip           (:HostIp cfg)
-        ^String port (:HostPort cfg)]
-    {:server-name ip
-     :server-port (Integer/valueOf port)}))
-
 (defn get-proxy-headers [request]
   {"x-forwarded-for" (:remote-addr request)
    "x-forwarded-host" (get-in request [:headers "host"])})
 
-(defn get-proxy-request [request :- ContainerRequest inspect :- DockerInspect] :- RingRequest
-  (merge
-   (get-host-port inspect)
-   {:uri (str "/" (:container-uri request))
-    :scheme :http
-    :throw-exceptions false
-    :headers (get-proxy-headers request)}
-   (select-keys request [:query-string :request-method :body])))
+(defn get-proxy-request [request c]
+  (let [[ip port] (container/get-host-port c)]
+    (merge
+     {:uri (str "/" (:container-uri request))
+      :scheme :http
+      :throw-exceptions false
+      :headers (get-proxy-headers request)
+      :server-name ip
+      :server-port port}
+     (select-keys request [:query-string :request-method :body]))))
 
-(defn started-time [inspect]
-  (let [timestr (get-in inspect [:State :StartedAt])]
-    (clj-time.format/parse timestr)))
-
-(defn try-request [config inspect request]
+(defn try-request [config request c]
   (let [continue?
         (fn []
-          (let [started (started-time inspect)
+          (let [started (container/started-time c)
                 _       (log/debug "container started at " started)
                 timeout (:startup-timeout config)
                 timeout (time/seconds timeout)
@@ -62,15 +53,16 @@
               nil))
           (recur)))))
 
-(defn proxy-to-container [config builder request]
+(defn proxy-to-container [request config builder index]
   "Proxy an HTTP request to the container with the given id"
-  (let [c       (container/load-info config (:container-vivd-id request))
-        c       (merge c {:builder builder})
-        c       (container/ensure-built c)
+  (let [c       (index/get index (:container-vivd-id request))
+        c       (container/ensure-built c builder)
+        _       (index/update index c)
         _       (log/debug "after build" c)
-        inspect (container/ensure-started c)
-        req     (get-proxy-request request inspect)
+        c       (container/ensure-started config c)
+        _       (index/update index c)
+        req     (get-proxy-request request c)
         _       (log/debug "proxy request" req)
-        resp    (try-request config inspect req)
+        resp    (try-request config req c)
         _       (log/debug "remote response" resp)]
     resp))

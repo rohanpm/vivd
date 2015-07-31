@@ -48,18 +48,19 @@
     (merge request {:container-vivd-id id
                     :container-uri rest})))
 
-(defn- proxy-handler* [config builder request]
-  (->> request
-      (augmented-proxy-request)
-      (proxy/proxy-to-container config builder)))
+(defn- make-proxy-handler [& args]
+  (log/info "make-proxy-handler args" args)
+  (fn [request]
+    (let [request (augmented-proxy-request request)]
+      (apply proxy/proxy-to-container request args))))
 
 (defn make-handler [config]
   "Returns a top-level handler for all HTTP requests"
-  (let [index-ref      (index/make config)
-        index-page-ref (index-page/make index-ref)
+  (let [index          (index/make)
+        index-page-ref (index-page/make index)
         index-handler  (make-index-handler index-page-ref)
         builder        (build/builder config)
-        proxy-handler  (partial proxy-handler* config builder)]
+        proxy-handler  (make-proxy-handler config builder index)]
     (fn [request]
       (let [^String uri (:uri request)]
         (log/debug uri)
