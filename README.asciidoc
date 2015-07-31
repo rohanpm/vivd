@@ -1,0 +1,85 @@
+= vivd =
+
+vivd is a development/testing tool for web applications.
+
+Provide vivd with a git ref/revision and it will build & start a docker
+container from those sources, and reverse proxy to it.  Containers can be
+automatically cleaned up using a Least Recently Used strategy.  Therefore, vivd
+provides a way to automatically provision and keep instances of your application
+for (for example) the N most recent commits in your repository or code review
+system.
+
+== Configuration ==
+
++data/config.clj+ should contain configuration items as in the following
+example:
+
+  {
+    ; time (in seconds) permitted for HTTP to become responsive
+    ; on new containers
+    :startup-timeout 60,
+  
+    ; the git URL used for fetching source
+    :git-url "https://github.com/docker-training/webapp.git",
+  
+    ; the image used
+    :docker-source-image "httpd:2.4",
+  
+    ; http port within the container
+    :docker-http-port 80,
+  
+    ; location within the container where code shall be placed
+    :docker-code-path "/usr/local/apache2/htdocs/code"
+  }
+
+== Image Requirements ==
+
+The docker image:
+
+- must expose an HTTP port
+
+- will have the git working tree (only) from the given revision checked out at
+  the configured path
+
+- must start your application as the ENTRYPOINT
+
+== API ==
+
+=== POST /create ===
+
+POST a single JSON object to /create to register a new container.
+The object must contain:
+
+  git-ref::
+    A git ref to be fetched
+
+  git-revision::
+    A git commit ID, which must be reachable from git-ref
+
+A successful create will give an HTTP 201 status code, with a Location header
+pointing at the container.
+
+Note that the image or container won't be built or started until it receives a
+request.
+
+Example:
+
+  $ curl -v -d '{"git-ref":"refs/heads/master","git-revision":"66be25e9da27c7deca3feb4835b887c659ee5ae3"}' http://localhost:8080/create
+  * About to connect() to localhost port 8080 (#0)
+  *   Trying ::1...
+  * Connected to localhost (::1) port 8080 (#0)
+  > POST /create HTTP/1.1
+  > User-Agent: curl/7.29.0
+  > Host: localhost:8080
+  > Accept: */*
+  > Content-Length: 89
+  > Content-Type: application/x-www-form-urlencoded
+  > 
+  * upload completely sent off: 89 out of 89 bytes
+  < HTTP/1.1 201 Created
+  < Date: Fri, 31 Jul 2015 07:53:20 GMT
+  < Location: /1kYX1RlB
+  < Content-Length: 0
+  < Server: Jetty(9.2.10.v20150310)
+  < 
+  
