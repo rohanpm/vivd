@@ -8,7 +8,8 @@
             [clojure.tools.logging :as log]
             [clojure.java.io :as io]
             [clojure.data.json :as json]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            clj-time.core))
 
 (set! *warn-on-reflection* true)
 
@@ -45,7 +46,8 @@
           id                             (generate-id)
           c                              {:id           id
                                           :git-ref      git-ref
-                                          :git-revision git-revision}]
+                                          :git-revision git-revision
+                                          :timestamp    (clj-time.core/now)}]
       (index/update index c)
       (log/info "Created:" data "id:" id)
       {:status 201

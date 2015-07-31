@@ -51,6 +51,7 @@
 (defn proxy-to-container [request config builder index]
   "Proxy an HTTP request to the container with the given id"
   (let [c       (index/get index (:container-vivd-id request))
+        c       (merge c {:timestamp (time/now)})
         c       (container/ensure-built c builder)
         _       (index/update index c)
         _       (log/debug "after build" c)

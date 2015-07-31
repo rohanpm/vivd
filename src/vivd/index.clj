@@ -3,6 +3,7 @@
   (:require [clojure.java.io :as io]
             [clojure.core.async :refer [chan >!! >! <! go-loop close!]]
             [clojure.edn :as edn]
+            [clojure.pprint :as pprint]
             [clj-time.coerce :as time-coerce]
             [clojure.tools.logging :as log]
             [vivd
@@ -58,9 +59,9 @@
           c    (prepare-for-file c)
           file ^java.io.File (io/file (container-dir) id)
           tmp-file ^java.io.File (io/file (str (.getPath file) ".new"))]
-      (log/info "Updating" id "with" c)
+      (log/debug "Updating" id "with" c)
       (with-open [o ^java.io.Writer (io/writer tmp-file)]
-        (.write o (str c)))
+        (pprint/pprint c o))
       (FileUtils/copyFile tmp-file file)
       (FileUtils/forceDelete tmp-file)
       (recur))))
