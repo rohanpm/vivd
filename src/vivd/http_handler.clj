@@ -42,7 +42,7 @@
                     :container-uri rest})))
 
 (defn- make-proxy-handler [& args]
-  (log/info "make-proxy-handler args" args)
+  (log/debug "make-proxy-handler args" args)
   (fn [request]
     (let [request (augmented-proxy-request request)]
       (apply proxy/proxy-to-container request args))))
