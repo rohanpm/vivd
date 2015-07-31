@@ -1,7 +1,7 @@
 (ns vivd.build
   (:require [clojure.core.async :refer [chan >!! >! <! go-loop close!]]
             [clojure.string :refer [trim]]
-            [vivd.logging :as log]
+            [clojure.tools.logging :as log]
             [vivd.utils :refer :all]
             [clojure.java.io :as io])
   (:import org.apache.commons.io.FileUtils))

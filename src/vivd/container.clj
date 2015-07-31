@@ -1,82 +1,63 @@
 (ns vivd.container
-  (:refer-clojure :exclude [let])
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.java.shell :refer [sh]]
             [clojure.data.json :as json]
-            [vivd.logging :as log]
-            [vivd.types :refer :all]
+            [clojure.tools.logging :as log]
             [vivd.utils :refer :all]
             [vivd.build :as build]
             [clojure.core.cache :as cache]
-            [clojure.core.typed :refer [ann typed-deps Any defalias tc-ignore let]]
             [clojure.core.async :refer [<!!]]
             [clojure.string :refer [trim]]
             [clj-time.coerce :as time-coerce]
             clj-time.format))
 
-(typed-deps vivd.types)
 (set! *warn-on-reflection* true)
 
 (def INSPECT-CACHE (atom
-                    (tc-ignore
-                     (cache/ttl-cache-factory {} :ttl 60000))))
+                    (cache/ttl-cache-factory {} :ttl 60000)))
 
-(ann ^:no-check lookup-inspect [Any String -> DockerInspect])
-(tc-ignore
- (defn- lookup-inspect [cache id]
-   (cache/lookup cache id)))
+(defn- lookup-inspect [cache id]
+  (cache/lookup cache id))
 
-(ann ^:no-check read-container-info [java.io.PushbackReader -> ContainerInfo])
-(tc-ignore
- (defn- read-container-info [stream]
-   (edn/read stream)))
+(defn- read-container-info [stream]
+  (edn/read stream))
 
-(ann ^:no-check lookup-container-info [Any String -> ContainerInfo])
-(tc-ignore
- (defn- lookup-container-info [cache id]
-   (cache/lookup cache id)))
+(defn- lookup-container-info [cache id]
+  (cache/lookup cache id))
 
-(ann datadir [-> String])
 (defn- datadir []
   "data/containers")
 
 (defn- gitdir []
   "data/git")
 
-(ann datadir [-> String])
 (defn- docker []
   "docker")
 
 (defn- reader-for-info ^java.io.PushbackReader [file-arg]
   (reader-for-file file-arg))
 
-(ann ^:no-check read-docker-inspect [String -> DockerInspect])
-(tc-ignore
- (defn- read-docker-inspect [str]
-   (-> str
-       (json/read-str :key-fn keyword)
-       (first))))
+(defn- read-docker-inspect [str]
+  (-> str
+      (json/read-str :key-fn keyword)
+      (first)))
 
-(ann docker-inspect* [String -> DockerInspect])
 (defn- docker-inspect* [did]
   (log/debug "DOCKER INSPECT CALLED:" did)
   (->> (sh! (docker) "inspect" did :out-enc "UTF-8")
        :out
        (read-docker-inspect)))
 
-(ann docker-inspect [String -> DockerInspect])
 (defn- docker-inspect [did]
   (let [newcache 
         (swap! INSPECT-CACHE (fn [cache]
                                (cache/through docker-inspect* cache did)))]
     (lookup-inspect newcache did)))
 
-(ann docker-inspect-evict [String -> Any])
 (defn- docker-inspect-evict [did]
   (swap! INSPECT-CACHE cache/evict did))
 
-(ann docker-start [String -> ShellResult])
 (defn- docker-start [did]
   (docker-inspect-evict did)
   (sh! (docker) "start" did))

@@ -1,7 +1,7 @@
 (ns vivd.utils
   (:require [clojure.java.io :as io]
             [clojure.java.shell :refer [sh]]
-            [vivd.logging :as log]))
+            [clojure.tools.logging :as log]))
 
 (defn reader-for-file ^java.io.PushbackReader [& args]
   (->  (apply io/file args)

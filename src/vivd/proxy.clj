@@ -1,17 +1,12 @@
 (ns vivd.proxy
-  (:refer-clojure :exclude [defn])
   (:require [clojure.data.json :as json]
-            [clojure.core
-             [typed :refer [typed-deps defn]]]
             [clj-http.client :as http]
             [clj-time.core :as time]
+            [clojure.tools.logging :as log]
             [vivd
              [container :as container]
-             [logging :as log]
-             [index :as index]
-             [types :refer :all]]))
+             [index :as index]]))
 
-(typed-deps vivd.types)
 (set! *warn-on-reflection* true)
 
 (defn get-proxy-headers [request]

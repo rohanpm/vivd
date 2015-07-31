@@ -1,19 +1,15 @@
 (ns vivd.http_handler
   (:require [vivd
              [proxy :as proxy]
-             [logging :as log]
-             [types :refer :all]
              [index :as index]
              [index-page :as index-page]
              [build :as build]]
             [ring.util.response :refer :all]
-            [clojure.string :as str]
-            [clojure.core.typed :refer [typed-deps ann]]))
+            [clojure.tools.logging :as log]
+            [clojure.string :as str]))
 
-(typed-deps vivd.types)
 (set! *warn-on-reflection* true)
 
-(ann ensuring-method [HttpMethod RingHandler -> RingHandler])
 (defn- ensuring-method [method handler]
   (fn [request]
     (if (= (:request-method request) method)
@@ -28,18 +24,15 @@
           :body @index-page-ref})
        (ensuring-method :get)))
 
-(ann create-handler* RingHandler)
 (defn- create-handler* [request]
   {:status 500
    :body "not yet implemented"})
 
-(ann create-handler RingHandler)
 (def ^{:private true} create-handler
   (->>
    create-handler*
    (ensuring-method :post)))
 
-(ann augmented-proxy-request [RingRequest -> ContainerRequest])
 (defn- augmented-proxy-request [request]
   (let [uri         (:uri request)
         uri-parts   (str/split uri #"/" 3)
