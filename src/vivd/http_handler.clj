@@ -6,16 +6,19 @@
              [build :as build]]
             [ring.util.response :refer :all]
             [clojure.tools.logging :as log]
+            [clojure.java.io :as io]
+            [clojure.data.json :as json]
             [clojure.string :as str]))
 
 (set! *warn-on-reflection* true)
 
 (defn- ensuring-method [method handler]
   (fn [request]
-    (if (= (:request-method request) method)
-      (handler request)
-      {:status 405
-       :body "Method not allowed"})))
+    (let [request-method (:request-method request)]
+      (if (= request-method method)
+        (handler request)
+        {:status 405
+         :body (str "Method " request-method " not allowed")}))))
 
 (defn make-index-handler [index-page-ref]
   (->> (fn [request]
@@ -24,14 +27,33 @@
           :body @index-page-ref})
        (ensuring-method :get)))
 
-(defn- create-handler* [request]
-  {:status 500
-   :body "not yet implemented"})
+(defn- read-json-stream [stream]
+  (with-open [reader (io/reader stream)]
+    (json/read reader :key-fn keyword)))
 
-(def ^{:private true} create-handler
-  (->>
-   create-handler*
-   (ensuring-method :post)))
+(def CHARS "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")
+(defn- generate-id []
+  (apply str (map (fn [_] (rand-nth CHARS)) (range 8))))
+
+(defn- make-create-handler* [index]
+  (fn [request]
+    (let [body                           (:body request)
+          data                           (read-json-stream body)
+          {:keys [git-ref git-revision]} data
+          _                              (assert git-ref "Missing git-ref in request")
+          _                              (assert git-revision "Missing git-revision in request")
+          id                             (generate-id)
+          c                              {:id           id
+                                          :git-ref      git-ref
+                                          :git-revision git-revision}]
+      (index/update index c)
+      (log/info "Created:" data "id:" id)
+      {:status 201
+       :headers {"location" (str "/" id)}})))
+
+(defn- make-create-handler [index]
+  (->> (make-create-handler* index)
+       (ensuring-method :post)))
 
 (defn- augmented-proxy-request [request]
   (let [uri         (:uri request)
@@ -53,6 +75,7 @@
         index-page-ref (index-page/make index)
         index-handler  (make-index-handler index-page-ref)
         builder        (build/builder config)
+        create-handler (make-create-handler index)
         proxy-handler  (make-proxy-handler config builder index)]
     (fn [request]
       (let [^String uri (:uri request)]
