@@ -7,7 +7,8 @@
             [clojure.tools.logging :as log]
             [vivd
              [container :as container]
-             [utils :refer :all]]))
+             [utils :refer :all]])
+  (:import org.apache.commons.io.FileUtils))
 
 (set! *warn-on-reflection* true)
 
@@ -45,11 +46,23 @@
         _               (log/debug "loaded containers:" container-map)]
     container-map))
 
+(defn- prepare-for-file [{:keys [timestamp] :as c}]
+  (merge
+   c
+   {:timestamp (time-coerce/to-string timestamp)}))
+
 (defn- file-writer-loop [index-ref channel]
   (go-loop []
-    (let [id (<! channel)
-          c  (@index-ref id)]
-      (log/info "Would update" id "with" c)
+    (let [id   (<! channel)
+          c    (@index-ref id)
+          c    (prepare-for-file c)
+          file (io/file (container-dir) id)
+          tmp-file (io/file (str (.getPath file) ".new"))]
+      (log/info "Updating" id "with" c)
+      (with-open [o (io/writer tmp-file)]
+        (.write o (str c)))
+      (FileUtils/copyFile tmp-file file)
+      (FileUtils/forceDelete tmp-file)
       (recur))))
 
 (defn get [{:keys [index-ref]} id]
