@@ -56,10 +56,10 @@
     (let [id   (<! channel)
           c    (@index-ref id)
           c    (prepare-for-file c)
-          file (io/file (container-dir) id)
-          tmp-file (io/file (str (.getPath file) ".new"))]
+          file ^java.io.File (io/file (container-dir) id)
+          tmp-file ^java.io.File (io/file (str (.getPath file) ".new"))]
       (log/info "Updating" id "with" c)
-      (with-open [o (io/writer tmp-file)]
+      (with-open [o ^java.io.Writer (io/writer tmp-file)]
         (.write o (str c)))
       (FileUtils/copyFile tmp-file file)
       (FileUtils/forceDelete tmp-file)
