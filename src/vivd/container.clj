@@ -117,29 +117,33 @@
             (sh! "git" "init" "--bare" dir)))))))
 
 (defn- have-git-revision? [rev]
-  (->> rev
-       (sh "git" (str "--git-dir=" (gitdir)) "rev-parse")
+  (->> (str rev "^{commit}")
+       (sh "git" (str "--git-dir=" (gitdir)) "rev-parse" "--verify")
        :exit
        (= 0)))
 
 (defn git! [& args]
   (apply sh! "git" (str "--git-dir=" (gitdir)) args))
 
-(defn- git-fetch [{:keys [git-url git-ref git-local-ref git-revision]}]
+(defn- git-fetch [{:keys [git-url git-local-ref] :as config} {:keys [git-ref git-revision]}]
+  (log/debug "git-fetch" config)
+  (assert git-url)
+  (assert git-local-ref)
   (git! "fetch" git-url (str "+" git-ref ":" git-local-ref))
   (if (not (have-git-revision? git-revision))
     (throw (ex-info (str "Fetching " git-url " " git-ref " did not provide " git-revision) {}))))
 
-(defn- ensure-git-fetched [{:keys [git-revision] :as c}]
+(defn- ensure-git-fetched [config {:keys [git-revision] :as c}]
   (ensure-git-init)
   (if (have-git-revision? git-revision)
     (log/debug "already have" git-revision)
-    (git-fetch c)))
+    (git-fetch config c)))
 
-(defn build [{:keys [git-url git-ref git-revision id] :as c} builder]
-  (let [ref (str "refs/container/" id)
-        c   (merge c {:git-local-ref ref :git-dir (gitdir)})
-        _   (ensure-git-fetched c)]
+(defn build [config {:keys [git-ref git-revision id] :as c} builder]
+  (let [ref    (str "refs/container/" id)
+        config (merge config {:git-local-ref ref :git-dir (gitdir)})
+        _      (log/debug "config now" config)
+        _      (ensure-git-fetched config c)]
     (log/debug "requesting build")
     (let [new-image (<!! (build/request-build builder c))]
       (assert new-image (str "Container failed to build for " git-revision))
@@ -153,7 +157,7 @@
         (:exit)
         (= 0))))
 
-(defn ensure-built [{:keys [docker-container-id] :as c} builder]
+(defn ensure-built [config {:keys [docker-container-id] :as c} builder]
   (cond
    ; if a container was created, the image must exist too...
    docker-container-id
@@ -161,7 +165,7 @@
    (image-exists? c)
      c
    :else
-     (merge c {:docker-image-id (build c builder)})))
+     (merge c {:docker-image-id (build config c builder)})))
 
 (defn get-host-port [{:keys [docker-container-id] :as c}]
   (let [inspect      (docker-inspect docker-container-id)

@@ -52,7 +52,7 @@
   "Proxy an HTTP request to the container with the given id"
   (let [c       (index/get index (:container-vivd-id request))
         c       (merge c {:timestamp (time/now)})
-        c       (container/ensure-built c builder)
+        c       (container/ensure-built config c builder)
         _       (index/update index c)
         _       (log/debug "after build" c)
         c       (container/ensure-started config c)
