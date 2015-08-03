@@ -1,7 +1,8 @@
 (ns vivd.utils
   (:require [clojure.java.io :as io]
             [clojure.java.shell :refer [sh]]
-            [clojure.tools.logging :as log]))
+            [clojure.tools.logging :as log])
+  (:import org.apache.commons.io.FileUtils))
 
 (defn reader-for-file ^java.io.PushbackReader [& args]
   (->  (apply io/file args)
@@ -15,3 +16,12 @@
     (if (not= 0 exit)
       (throw (ex-info "command failed" {:result result}))
       result)))
+
+(def FILE-LOCK (Object.))
+
+(defn ensure-directory-exists [dir]
+  (let [dir-f (io/as-file dir)]
+    (if (not (.exists dir-f))
+      (locking FILE-LOCK
+        (if (not (.exists dir-f))
+          (FileUtils/forceMkdir dir-f))))))

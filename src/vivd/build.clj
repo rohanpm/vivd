@@ -41,7 +41,8 @@
 (defn- do-build [config out c]
   (try
     (log/debug "Will build:" c)
-    (let [dirf (-> (builddir) (io/file))]
+    (let [dirf (-> (builddir) (io/file))
+          _    (ensure-directory-exists dirf)]
       (FileUtils/forceDelete dirf)
       (FileUtils/forceMkdir dirf)
       (setup-src dirf c)

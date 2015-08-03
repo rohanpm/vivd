@@ -17,8 +17,10 @@
   "data/containers")
 
 (defn- container-dir-f ^java.io.File []
-  (-> (container-dir)
-      (io/as-file)))
+  (let [out (-> (container-dir)
+                (io/as-file))]
+    (ensure-directory-exists out)
+    out))
 
 (defn- load-info [id]
   (log/debug "Reading info for:" id)
