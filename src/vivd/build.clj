@@ -3,7 +3,8 @@
             [clojure.string :refer [trim]]
             [clojure.tools.logging :as log]
             [vivd.utils :refer :all]
-            [clojure.java.io :as io])
+            [clojure.java.io :as io]
+            [clojure.data.json :as json])
   (:import org.apache.commons.io.FileUtils))
 
 (defn- builddir []
@@ -20,11 +21,17 @@
     (FileUtils/forceMkdir code-dir)
     (sh! "/bin/sh" "-c" cmd)))
 
+(defn- write-json-directive [stream directive value]
+  (if value
+    (.write stream (str directive " " (json/write-str value) "\n"))))
+
 (defn- setup-dockerfile [config dirf c]
   (let [dest (io/file dirf "Dockerfile")]
     (with-open [o (io/writer dest)]
       (.write o (str "FROM " (:docker-source-image config) "\n"))
-      (.write o (str "ADD code/ " (:docker-code-path config) "\n")))))
+      (.write o (str "ADD code/ " (:docker-code-path config) "\n"))
+      (write-json-directive o "CMD" (:docker-cmd config))
+      (write-json-directive o "ENTRYPOINT" (:docker-entrypoint config)))))
 
 (defn- docker-build [dirf]
   ; this is pretty dumb, but "docker build" doesn't seem to have any

@@ -22,14 +22,19 @@ example:
     ; the git URL used for fetching source
     :git-url "https://github.com/docker-training/webapp.git",
   
-    ; the image used
+    ; the source image used
     :docker-source-image "httpd:2.4",
   
     ; http port within the container
     :docker-http-port 80,
   
     ; location within the container where code shall be placed
-    :docker-code-path "/usr/local/apache2/htdocs/code"
+    :docker-code-path "/usr/local/apache2/htdocs/code",
+
+    ; ENTRYPOINT and CMD used for built images; can be omitted.
+    ; Array form only.
+    :docker-entrypoint ["/usr/local/apache2/bin/httpd"],
+    :docker-cmd ["-DFOREGROUND"]
   }
 
 == Image Requirements ==
