@@ -26,9 +26,6 @@
 (defn- lookup-container-info [cache id]
   (cache/lookup cache id))
 
-(defn- datadir []
-  "data/containers")
-
 (defn- gitdir []
   "data/git")
 
