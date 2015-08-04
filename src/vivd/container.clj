@@ -59,6 +59,10 @@
   (docker-inspect-evict did)
   (sh! (docker) "start" did))
 
+(defn- docker-stop [did]
+  (docker-inspect-evict did)
+  (sh! (docker) "stop" did))
+
 (defn- port-key [{:keys [docker-http-port]}]
   (keyword (str docker-http-port "/tcp")))
 
@@ -81,12 +85,14 @@
         _            (log/info "Created container" container-id "from image" docker-image-id)]
     container-id))
 
+(defn container-running? [{:keys [docker-container-id]}]
+  (let [inspect (docker-inspect docker-container-id)]
+    (get-in inspect [:State :Running])))
+
 (defn ensure-started [config {:keys [docker-container-id] :as c}]
   (let [docker-container-id (or docker-container-id (create-container config c))
         c                   (merge c {:docker-container-id docker-container-id})
-        inspect             (docker-inspect docker-container-id)
-        _                   (log/debug "inspect " inspect)
-        running             (get-in inspect [:State :Running])]
+        running             (container-running? c)]
     (if (not running)
       (do
         (log/info "Starting:" docker-container-id)
@@ -94,7 +100,10 @@
     (wait-for-network config docker-container-id)
     c))
 
-(defn container-exists? [{:keys [:docker-container-id] :as c}]
+(defn stop [{:keys [docker-container-id] :as c}]
+  (docker-stop docker-container-id))
+
+(defn container-exists? [{:keys [docker-container-id] :as c}]
   (if (lookup-inspect @INSPECT-CACHE docker-container-id)
     (let [result (sh (docker) "inspect" docker-container-id :out-enc "UTF-8")
           out    (-> result (:out) (json/read-str))

@@ -3,7 +3,8 @@
              [proxy :as proxy]
              [index :as index]
              [index-page :as index-page]
-             [build :as build]]
+             [build :as build]
+             [reap :as reap]]
             [ring.util.response :refer :all]
             [clojure.tools.logging :as log]
             [clojure.java.io :as io]
@@ -80,6 +81,7 @@
   (let [index          (index/make)
         index-page-ref (index-page/make index)
         index-handler  (make-index-handler index-page-ref)
+        _              (reap/run-async config index)
         builder        (build/builder config)
         create-handler (make-create-handler index)
         proxy-handler  (make-proxy-handler config builder index)]
