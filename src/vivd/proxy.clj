@@ -13,8 +13,8 @@
   {"x-forwarded-for" (:remote-addr request)
    "x-forwarded-host" (get-in request [:headers "host"])})
 
-(defn get-proxy-request [request c]
-  (let [[ip port] (container/get-host-port c)]
+(defn get-proxy-request [request config c]
+  (let [[ip port] (container/get-host-port config c)]
     (merge
      {:uri (str "/" (:container-uri request))
       :scheme :http
@@ -57,7 +57,7 @@
         _       (log/debug "after build" c)
         c       (container/ensure-started config c)
         _       (index/update index c)
-        req     (get-proxy-request request c)
+        req     (get-proxy-request request config c)
         _       (log/debug "proxy request" req)
         resp    (try-request config req c)
         _       (log/debug "remote response" resp)]

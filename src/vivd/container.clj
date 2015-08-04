@@ -59,13 +59,16 @@
   (docker-inspect-evict did)
   (sh! (docker) "start" did))
 
-(defn wait-for-network [did]
+(defn- port-key [{:keys [docker-http-port]}]
+  (keyword (str docker-http-port "/tcp")))
+
+(defn wait-for-network [config did]
   (loop [attempt 0
          inspect (docker-inspect did)]
-    (if (get-in inspect [:NetworkSettings :Ports :80/tcp 0 :HostPort])
+    (if (get-in inspect [:NetworkSettings :Ports (port-key config) 0 :HostPort])
       inspect
       (if (> attempt 4)
-        (throw (ex-info (str "No port 80 bound") {:docker-container-id did}))
+        (throw (ex-info (str "HTTP port was not bound in container") {:docker-container-id did}))
         (do
           (Thread/sleep 200)
           (docker-inspect-evict did)
@@ -88,7 +91,7 @@
       (do
         (log/info "Starting:" docker-container-id)
         (docker-start docker-container-id)))
-    (wait-for-network docker-container-id)
+    (wait-for-network config docker-container-id)
     c))
 
 (defn container-exists? [{:keys [:docker-container-id] :as c}]
@@ -164,9 +167,9 @@
    :else
      (merge c {:docker-image-id (build config c builder)})))
 
-(defn get-host-port [{:keys [docker-container-id] :as c}]
+(defn get-host-port [config {:keys [docker-container-id] :as c}]
   (let [inspect      (docker-inspect docker-container-id)
-        cfg          (get-in inspect [:NetworkSettings :Ports :80/tcp 0])
+        cfg          (get-in inspect [:NetworkSettings :Ports (port-key config) 0])
         ip           (:HostIp cfg)
         ^String port (:HostPort cfg)]
     [ip
