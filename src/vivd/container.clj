@@ -1,4 +1,5 @@
 (ns vivd.container
+  (:refer-clojure :exclude [remove])
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.java.shell :refer [sh]]
@@ -63,6 +64,13 @@
   (docker-inspect-evict did)
   (sh! (docker) "stop" did))
 
+(defn- docker-rm [did]
+  (docker-inspect-evict did)
+  (sh! (docker) "rm" did))
+
+(defn- docker-rmi [image-id]
+  (sh! (docker) "rmi" image-id))
+
 (defn- port-key [{:keys [docker-http-port]}]
   (keyword (str docker-http-port "/tcp")))
 
@@ -85,14 +93,14 @@
         _            (log/info "Created container" container-id "from image" docker-image-id)]
     container-id))
 
-(defn container-running? [{:keys [docker-container-id]}]
+(defn running? [{:keys [docker-container-id]}]
   (let [inspect (docker-inspect docker-container-id)]
     (get-in inspect [:State :Running])))
 
 (defn ensure-started [config {:keys [docker-container-id] :as c}]
   (let [docker-container-id (or docker-container-id (create-container config c))
         c                   (merge c {:docker-container-id docker-container-id})
-        running             (container-running? c)]
+        running             (running? c)]
     (if (not running)
       (do
         (log/info "Starting:" docker-container-id)
@@ -102,6 +110,17 @@
 
 (defn stop [{:keys [docker-container-id] :as c}]
   (docker-stop docker-container-id))
+
+(defn remove [{:keys [docker-container-id] :as c}]
+  (let [inspect  (docker-inspect docker-container-id)
+        image-id (:Image inspect)]
+    (docker-rm docker-container-id)
+    (try
+      (docker-rmi image-id)
+      (catch Exception e
+          ; tolerating rmi errors because the image can still be in use by
+          ; another container.
+          (log/warn "rmi failed (may be OK)" e)))))
 
 (defn container-exists? [{:keys [docker-container-id] :as c}]
   (if (lookup-inspect @INSPECT-CACHE docker-container-id)

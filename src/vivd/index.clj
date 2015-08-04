@@ -1,5 +1,5 @@
 (ns vivd.index
-  (:refer-clojure :exclude [get update])
+  (:refer-clojure :exclude [get update remove])
   (:require [clojure.java.io :as io]
             [clojure.core.async :refer [chan >!! >! <! go-loop close!]]
             [clojure.edn :as edn]
@@ -54,6 +54,11 @@
    c
    {:timestamp (time-coerce/to-string timestamp)}))
 
+(defn- remove-file [id]
+  (let [file ^java.io.File (io/file (container-dir) id)]
+    (if (.exists file)
+      (.delete file))))
+
 (defn- file-writer-loop [index-ref channel]
   (go-loop []
     (let [id   (<! channel)
@@ -71,6 +76,13 @@
 (defn get [{:keys [index-ref]} id]
   "Look up a container in the index, by id."
   ((deref index-ref) id))
+
+(defn remove [{:keys [index-ref]} id]
+  "Remove a container from the index."
+  (log/debug "Removing" id)
+  (swap! index-ref (fn [val]
+                     (remove-file id)
+                     (dissoc val id))))
 
 (defn update [{:keys [index-ref file-writer-chan]} {:keys [id] :as c}]
   "Update the data for a single container in the index. This will synchronously

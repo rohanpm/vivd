@@ -18,6 +18,12 @@ example:
     ; time (in seconds) permitted for HTTP to become responsive
     ; on new containers
     :startup-timeout 60,
+
+    ; max number of containers allowed to exist
+    :max-containers 200,
+
+    ; max number of containers allowed to be running
+    :max-containers-up 4,
   
     ; the git URL used for fetching source
     :git-url "https://github.com/docker-training/webapp.git",
