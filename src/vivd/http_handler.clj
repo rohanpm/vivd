@@ -65,11 +65,15 @@
     (merge request {:container-vivd-id id
                     :container-uri rest})))
 
-(defn- make-proxy-handler [& args]
-  (log/debug "make-proxy-handler args" args)
+(defn- make-proxy-handler [config builder index]
   (fn [request]
-    (let [request (augmented-proxy-request request)]
-      (apply proxy/proxy-to-container request args))))
+    (let [{:keys [container-vivd-id] :as request} (augmented-proxy-request request)]
+      (if (index/get index container-vivd-id)
+        (proxy/proxy-to-container request config builder index)
+        (do
+          (log/debug "doesn't look like a valid container - " container-vivd-id)
+          {:status 404
+           :body "resource not found"})))))
 
 (defn make-handler [config]
   "Returns a top-level handler for all HTTP requests"
