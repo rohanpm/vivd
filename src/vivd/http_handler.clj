@@ -76,6 +76,29 @@
           {:status 404
            :body "resource not found"})))))
 
+(defn- make-redirect-handler [index]
+  "Redirect requests which appear to accidentally escape the container"
+  (fn [{:keys [^String uri headers] :as request}]
+    (let [referer ^String (headers "referer")
+          host    (headers "host")
+          prefix  (str "http://" host "/")
+          all-c   (index/keys index)
+          matches (fn [id]
+                    (let [needle ^String (str prefix id)
+                          found  (.startsWith referer needle)]
+                      (log/debug needle found)
+                      found))          
+          match-c (filter matches all-c)
+          matched (first match-c)]
+      (log/debug "referer " referer " from container " matched " looking at " uri)
+      (if (and matched
+               (not (.startsWith uri (str "/" matched))))
+        (let [dest (str matched uri)]
+          (log/debug "redirect to" dest)
+          {:status 307
+           :headers {"location" (str prefix dest)}})
+        nil))))
+
 (defn make-handler [config]
   "Returns a top-level handler for all HTTP requests"
   (let [index          (index/make)
@@ -84,11 +107,13 @@
         _              (reap/run-async config index)
         builder        (build/builder config)
         create-handler (make-create-handler index)
-        proxy-handler  (make-proxy-handler config builder index)]
+        proxy-handler  (make-proxy-handler config builder index)
+        redirect-handler (make-redirect-handler index)]
     (fn [request]
       (let [^String uri (:uri request)]
         (log/debug uri)
-        (cond
-         (= uri "/")       (index-handler request)
-         (= uri "/create") (create-handler request)
-         :else             (proxy-handler request))))))
+        (or (redirect-handler request)
+            (cond
+             (= uri "/")       (index-handler request)
+             (= uri "/create") (create-handler request)
+             :else             (proxy-handler request)))))))
