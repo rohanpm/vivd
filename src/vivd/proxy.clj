@@ -22,7 +22,8 @@
       :headers (get-proxy-headers request)
       :server-name ip
       :server-port port
-      :as :stream}
+      :as :stream
+      :follow-redirects false}
      (select-keys request [:query-string :request-method :body]))))
 
 (defn try-request [config request c]
