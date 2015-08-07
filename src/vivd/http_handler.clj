@@ -76,29 +76,32 @@
           {:status 404
            :body "resource not found"})))))
 
+(defn- vivd-url [{:keys [headers]}]
+  (if-let [host (headers "host")]
+    ; FIXME: do not assume http, do not assume served at /
+    (str "http://" host "/")))
+
+(defn- request-referred-from-container? [{:keys [headers] :as request} id]
+  (if-let [^String referer (headers "referer")]
+    (let [container-url (str (vivd-url request) id)]
+      (or (= referer container-url)
+          (.startsWith referer (str container-url "/"))))))
+
+(defn- redirect-handler* [index {:keys [^String uri headers] :as request}]
+  (let [all-c           (index/keys index)
+        matches         (partial request-referred-from-container? request)
+        match-c         (filter matches all-c)
+        id              (first match-c)]
+    (if (and id
+             (not (.startsWith uri (str "/" id))))
+      (let [dest (str id uri)]
+        (log/debug "redirect to" dest)
+        {:status 307
+         :headers {"location" (str (vivd-url request) dest)}}))))
+
 (defn- make-redirect-handler [index]
   "Redirect requests which appear to accidentally escape the container"
-  (fn [{:keys [^String uri headers] :as request}]
-    (let [^String referer
-                  (or (headers "referer") "")
-          host    (headers "host")
-          prefix  (str "http://" host "/")
-          all-c   (index/keys index)
-          matches (fn [id]
-                    (let [needle ^String (str prefix id)
-                          found  (.startsWith referer needle)]
-                      (log/debug needle found)
-                      found))          
-          match-c (filter matches all-c)
-          matched (first match-c)]
-      (log/debug "referer " referer " from container " matched " looking at " uri)
-      (if (and matched
-               (not (.startsWith uri (str "/" matched))))
-        (let [dest (str matched uri)]
-          (log/debug "redirect to" dest)
-          {:status 307
-           :headers {"location" (str prefix dest)}})
-        nil))))
+  (partial redirect-handler* index))
 
 (defn make-handler [config]
   "Returns a top-level handler for all HTTP requests"
