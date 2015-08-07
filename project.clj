@@ -9,4 +9,6 @@
                  [clj-http "2.0.0"]
                  [clj-template "1.0.1"]
                  [log4j/log4j "1.2.17"]
-                 [clj-time "0.10.0"]])
+                 [clj-time "0.10.0"]]
+  :profiles {:dev {:plugins      [[lein-midje "3.1.3"]]
+                   :dependencies [[midje "1.6.3"]]}})
