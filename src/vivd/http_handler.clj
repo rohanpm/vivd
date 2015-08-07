@@ -79,7 +79,8 @@
 (defn- make-redirect-handler [index]
   "Redirect requests which appear to accidentally escape the container"
   (fn [{:keys [^String uri headers] :as request}]
-    (let [referer ^String (or (headers "referer") "")
+    (let [^String referer
+                  (or (headers "referer") "")
           host    (headers "host")
           prefix  (str "http://" host "/")
           all-c   (index/keys index)
