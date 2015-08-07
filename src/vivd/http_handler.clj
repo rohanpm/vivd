@@ -87,17 +87,21 @@
       (or (= referer container-url)
           (.startsWith referer (str container-url "/"))))))
 
-(defn- redirect-handler* [index {:keys [^String uri headers] :as request}]
+(defn- redirect-handler* [index {:keys [^String uri query-string headers] :as request}]
   (let [all-c           (index/keys index)
         matches         (partial request-referred-from-container? request)
         match-c         (filter matches all-c)
         id              (first match-c)]
     (if (and id
              (not (.startsWith uri (str "/" id))))
-      (let [dest (str id uri)]
+      (let [relative-dest (str id uri)
+            dest          (str (vivd-url request) relative-dest)
+            dest          (if query-string
+                            (str dest "?" query-string)
+                            dest)]
         (log/debug "redirect to" dest)
         {:status 307
-         :headers {"location" (str (vivd-url request) dest)}}))))
+         :headers {"location" dest}}))))
 
 (defn- make-redirect-handler [index]
   "Redirect requests which appear to accidentally escape the container"

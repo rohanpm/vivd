@@ -44,4 +44,10 @@
   (fact "redirects for referred requests escaping the container"
     (redirect-handler {:uri "/foo" :headers {"referer" "http://localhost/a1b2c3/x"
                                              "host"    "localhost"}})
-    => {:status 307 :headers {"location" "http://localhost/a1b2c3/foo"}}))
+    => {:status 307 :headers {"location" "http://localhost/a1b2c3/foo"}})
+
+  (fact "retains the query string"
+    (redirect-handler {:uri "/bar" :query-string "x=y&a=b"
+                       :headers {"referer" "http://example.com/aabbcc/x/y/z"
+                                 "host"    "example.com"}})
+    => {:status 307 :headers {"location" "http://example.com/aabbcc/bar?x=y&a=b"}}))
