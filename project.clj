@@ -11,4 +11,5 @@
                  [log4j/log4j "1.2.17"]
                  [clj-time "0.10.0"]]
   :profiles {:dev {:plugins      [[lein-midje "3.1.3"]]
-                   :dependencies [[midje "1.6.3"]]}})
+                   :dependencies [[midje "1.6.3"]]}
+             :uberjar {:aot :all}})

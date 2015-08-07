@@ -1,4 +1,5 @@
 (ns vivd.main
+  (:gen-class)
   (:require [vivd 
              [utils :refer :all]
              http_handler
