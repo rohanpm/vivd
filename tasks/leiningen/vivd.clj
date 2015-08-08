@@ -7,7 +7,7 @@
   (:import org.apache.commons.io.FileUtils))
 
 (defn- resources-dir []
-  (io/file "resources/public"))
+  (io/file "resources/public/vendor"))
 
 (defn- copy-dist [project component]
   (let [name     (.getName component)
