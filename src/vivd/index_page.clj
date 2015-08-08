@@ -58,9 +58,11 @@
   (or (abbr-for-ref git-ref)
       git-ref))
 
-(defn git-revision-info [{:keys [git-revision]}]
+(defn git-revision-info [{:keys [git-revision git-oneline]}]
   (code
-   git-revision))
+   (or
+    git-oneline
+    git-revision)))
 
 (defn container-git [c]
   (span

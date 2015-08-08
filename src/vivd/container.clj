@@ -161,6 +161,11 @@
   (if (not (have-git-revision? git-revision))
     (throw (ex-info (str "Fetching " git-url " " git-ref " did not provide " git-revision) {}))))
 
+(defn- extended-git-info [{:keys [git-revision]}]
+  {:git-oneline (->> git-revision
+                     (git! "log" "--oneline" "-n1")
+                     (:out))})
+
 (defn- ensure-git-fetched [config {:keys [git-revision] :as c}]
   (ensure-git-init)
   (if (have-git-revision? git-revision)
@@ -189,11 +194,16 @@
   (cond
    ; if a container was created, the image must exist too...
    docker-container-id
-     c
+   c
+
    (image-exists? c)
-     c
+   c
+
    :else
-     (merge c {:docker-image-id (build config c builder)})))
+   (let [built (build config c builder)]
+     (merge c
+            {:docker-image-id built}
+            (extended-git-info c)))))
 
 (defn get-host-port [config {:keys [docker-container-id] :as c}]
   (let [inspect      (docker-inspect docker-container-id)
