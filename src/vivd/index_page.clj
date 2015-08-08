@@ -75,5 +75,6 @@
      (html
       (vivd-head)
       (body
-       (h1 "Containers")
-       (container-table ordered))))))
+       (div {:class "container"}
+            (h1 "Containers")
+            (container-table ordered)))))))
