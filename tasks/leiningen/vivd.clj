@@ -6,10 +6,13 @@
             robert.hooke)
   (:import org.apache.commons.io.FileUtils))
 
+(defn- resources-dir []
+  (io/file "resources/public"))
+
 (defn- copy-dist [project component]
   (let [name     (.getName component)
         dist-dir (io/file component "dist")
-        dest-dir (io/file "resources/public" name)]
+        dest-dir (io/file (resources-dir) name)]
     (if (.exists dist-dir)
       (do
         (println "Copy:" (.getPath dist-dir) "=>" (.getPath dest-dir))
@@ -26,10 +29,23 @@
         copier     (partial copy-dist project)]
     (doall (map copier components))))
 
+(defn- copy-one-resource [file]
+  (let [name (.getName file)
+        dest (io/file (resources-dir) name)]
+    (println "Copy:" (.getPath file) "=>" (.getPath dest))
+    (FileUtils/copyFile file dest)))
+
+(defn- copy-bower-files [{:keys [bower] :as project}]
+  (let [bower-root (:directory bower)
+        files      (:flat-files bower)
+        files      (map #(io/file bower-root %) files)]
+    (doall (map copy-one-resource files))))
+
 (defn- prepare-bower-deps [project]
   (let  [result (leiningen.bower/bower project "install")]
     (assert (= result 0) "bower install failed"))
-  (copy-bower-dists project))
+  (copy-bower-dists project)
+  (copy-bower-files project))
 
 (def in-hook nil)
 

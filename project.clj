@@ -10,8 +10,10 @@
                  [clj-template "1.0.1"]
                  [log4j/log4j "1.2.17"]
                  [clj-time "0.10.0"]]
-  :bower-dependencies [[bootstrap "3.3.5"]]
-  :bower {:directory "bower_components"}
+  :bower-dependencies [[bootstrap "3.3.5"]
+                       [jquery-timeago "1.4.1"]]
+  :bower {:directory "bower_components"
+          :flat-files ["jquery-timeago/jquery.timeago.js"]}
   :hooks [leiningen.vivd/add-hooks]
   :profiles {:dev {:plugins      [[lein-midje "3.1.3"]
                                   [lein-bower "0.5.1"]]
