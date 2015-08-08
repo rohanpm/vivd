@@ -1,5 +1,5 @@
 (ns vivd.index
-  (:refer-clojure :exclude [get update remove keys])
+  (:refer-clojure :exclude [get update remove keys vals])
   (:require [clojure.java.io :as io]
             [clojure.core.async :refer [chan >!! >! <! go-loop close!]]
             [clojure.edn :as edn]
@@ -80,6 +80,10 @@
 (defn keys [{:keys [index-ref]}]
   "Return all container ids."
   (clojure.core/keys @index-ref))
+
+(defn vals [{:keys [index-ref]}]
+  "Return all containers."
+  (clojure.core/vals @index-ref))
 
 (defn remove [{:keys [index-ref]} id]
   "Remove a container from the index."

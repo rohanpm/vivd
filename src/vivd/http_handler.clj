@@ -32,11 +32,11 @@
         {:status 405
          :body (str "Method " request-method " not allowed")}))))
 
-(defn make-index-handler [index-page-ref]
+(defn make-index-handler [index]
   (->> (fn [request]
          {:status 200
           :headers {"content-type" "text/html"}
-          :body @index-page-ref})
+          :body (index-page/from-index index)})
        (ensuring-method :get)
        (if-uri-is "/")))
 
@@ -143,8 +143,7 @@
 (defn make-handler [config]
   "Returns a top-level handler for all HTTP requests"
   (let [index          (index/make)
-        index-page-ref (index-page/make index)
-        index-handler  (make-index-handler index-page-ref)
+        index-handler  (make-index-handler index)
         _              (reap/run-async config index)
         builder        (build/builder config)
         create-handler (make-create-handler index)
