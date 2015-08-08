@@ -1,6 +1,6 @@
 (ns vivd.index-page
   (:refer-clojure :rename {map clj-map meta clj-meta time clj-time})
-  (:require [clj-template.html :refer :all]))
+  (:require [clj-template.html5 :refer :all]))
 
 (set! *warn-on-reflection* true)
 
@@ -13,15 +13,22 @@
         (br)
         "Docker: " (:docker-container-id c))))
 
+(defn vivd-head []
+  (head (title "Containers")
+        (link- {:rel "stylesheet"
+                :href "public/bootstrap/css/bootstrap.min.css"})))
+
 (defn from-index [index]
   (let [ordered (vals index)
         ordered (sort-by :timestamp ordered)
         ordered (reverse ordered)]
-    (html
-     (head (title "Containers"))
-     (body
-      (h1 "Containers")
-      (apply div (clj-map container-elem ordered))))))
+    (str
+     "<!DOCTYPE html>"
+     (html
+      (vivd-head)
+      (body
+       (h1 "Containers")
+       (apply div (clj-map container-elem ordered)))))))
 
 (defn index-updater [page-ref]
   (fn [_ _ _ index]

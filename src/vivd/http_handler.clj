@@ -14,6 +14,16 @@
 
 (set! *warn-on-reflection* true)
 
+(defn- if-uri-is [desired-uri handler]
+  (fn [{:keys [uri] :as request}]
+    (if (= uri desired-uri)
+      (handler request))))
+
+(defn- if-uri-starts-with [desired-uri handler]
+  (fn [{:keys [^String uri] :as request}]
+    (if (.startsWith uri desired-uri)
+      (handler request))))
+
 (defn- ensuring-method [method handler]
   (fn [request]
     (let [request-method (:request-method request)]
@@ -27,7 +37,8 @@
          {:status 200
           :headers {"content-type" "text/html"}
           :body @index-page-ref})
-       (ensuring-method :get)))
+       (ensuring-method :get)
+       (if-uri-is "/")))
 
 (defn- read-json-stream [stream]
   (with-open [reader (io/reader stream)]
@@ -56,7 +67,8 @@
 
 (defn- make-create-handler [index]
   (->> (make-create-handler* index)
-       (ensuring-method :post)))
+       (ensuring-method :post)
+       (if-uri-is "/create")))
 
 (defn- augmented-proxy-request [request]
   (let [uri         (:uri request)
@@ -107,6 +119,27 @@
   "Redirect requests which appear to accidentally escape the container"
   (partial redirect-handler* index))
 
+(defn guess-content-type [^String filename]
+  (cond
+   (.endsWith filename ".js")  "application/javascript; charset=utf-8"
+   (.endsWith filename ".css") "text/css; charset=utf-8"))
+
+(defn resource-handler* [{:keys [^String uri] :as request}]
+  (let [relative (.substring uri 1)]
+    (log/debug "looking for resource" relative)
+    (if-let [resource (io/resource relative)]
+      {:status 200
+       :headers (if-let [type (guess-content-type relative)]
+                  {"content-type" type}
+                  {})
+       :body (io/input-stream resource)}
+      {:status 404
+       :body "resource not found"})))
+
+(def resource-handler
+  (->> resource-handler*
+       (if-uri-starts-with "/public/")))
+
 (defn make-handler [config]
   "Returns a top-level handler for all HTTP requests"
   (let [index          (index/make)
@@ -121,7 +154,7 @@
       (let [^String uri (:uri request)]
         (log/debug uri)
         (or (redirect-handler request)
-            (cond
-             (= uri "/")       (index-handler request)
-             (= uri "/create") (create-handler request)
-             :else             (proxy-handler request)))))))
+            (resource-handler request)
+            (index-handler request)
+            (create-handler request)
+            (proxy-handler request))))))
