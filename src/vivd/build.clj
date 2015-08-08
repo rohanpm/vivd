@@ -47,7 +47,7 @@
     (log/debug "docker build - " result)
     built))
 
-(defn- do-build [config index out c]
+(defn- do-build* [config index out {:keys [id git-revision] :as c}]
   (try
     (log/debug "Will build:" c)
     (index/update index (merge c {:status :building}))
@@ -57,10 +57,21 @@
       (FileUtils/forceMkdir dirf)
       (setup-src dirf c)
       (setup-dockerfile config dirf c)
-      (->> (docker-build dirf)
-           (>!! out))
-      (index/update index (merge c {:status :built})))
+      (let [new-image (docker-build dirf)
+            new-c     (merge c {:status          :built
+                                :docker-image-id new-image})]
+        (log/info "Built image" new-image "for" git-revision)
+        (index/update index new-c)
+        (>!! out new-c)))
     (finally (close! out))))
+
+(defn do-build [config index out {:keys [id git-revision] :as c}]
+  (let [updated-c (index/get index id)]
+    (if (:docker-image-id updated-c)
+      (do
+        (log/debug "returning already built:" updated-c)
+        (>!! out updated-c))
+      (do-build* config index out c))))
 
 (defn builder [config index]
   (let [ch (chan 10)]

@@ -179,10 +179,9 @@
         _      (log/debug "config now" config)
         _      (ensure-git-fetched config c)]
     (log/debug "requesting build")
-    (let [new-image (<!! (build/request-build builder c))]
-      (assert new-image (str "Container failed to build for " git-revision))
-      (log/info "Built image" new-image "for" git-revision)
-      new-image)))
+    (let [c (<!! (build/request-build builder c))]
+      (assert c (str "Container failed to build for " git-revision))
+      c)))
 
 (defn- image-exists? [{:keys [docker-image-id]}]
   (if (not docker-image-id)
@@ -201,9 +200,8 @@
    c
 
    :else
-   (let [built (build config c builder)]
+   (let [c (build config c builder)]
      (merge c
-            {:docker-image-id built}
             (extended-git-info c)))))
 
 (defn get-host-port [config {:keys [docker-container-id] :as c}]
