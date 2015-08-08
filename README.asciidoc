@@ -48,7 +48,15 @@ example:
   ; ENTRYPOINT and CMD used for built images; can be omitted.
   ; Array form only.
   :docker-entrypoint ["/usr/local/apache2/bin/httpd"],
-  :docker-cmd ["-DFOREGROUND"]}
+  :docker-cmd ["-DFOREGROUND"],
+
+  ; HTTP server configuration (e.g. customize host/port binding).
+  ; See valid options at: https://ring-clojure.github.io/ring/ring.adapter.jetty.html#var-run-jetty
+  :jetty-config {
+    :port 80,
+    :max-threads 100,
+  },
+}
 ..............................................................
 
 == Image Requirements ==
