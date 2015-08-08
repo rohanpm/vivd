@@ -10,6 +10,10 @@
                  [clj-template "1.0.1"]
                  [log4j/log4j "1.2.17"]
                  [clj-time "0.10.0"]]
-  :profiles {:dev {:plugins      [[lein-midje "3.1.3"]]
+  :bower-dependencies [[bootstrap "3.3.5"]]
+  :bower {:directory "bower_components"}
+  :hooks [leiningen.vivd/add-hooks]
+  :profiles {:dev {:plugins      [[lein-midje "3.1.3"]
+                                  [lein-bower "0.5.1"]]
                    :dependencies [[midje "1.6.3"]]}
              :uberjar {:aot :all}})

@@ -1,3 +1,5 @@
 .nrepl-port
 *~
 target/
+bower_components/
+resources/public/
