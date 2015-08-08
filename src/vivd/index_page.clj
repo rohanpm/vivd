@@ -23,9 +23,9 @@
                        "public/vendor/jquery.timeago.js"
                        "public/vivd.js"]))
 
-(defn vivd-head []
+(defn vivd-head [config]
   (apply head
-         (title "Containers")
+         (title (:title config))
          (concat (stylesheets)
                  (javascripts))))
 
@@ -144,7 +144,7 @@
     (str
      "<!DOCTYPE html>"
      (html
-      (vivd-head)
+      (vivd-head config)
       (body
        (div {:class "container"}
             (h1 {:class "text-center"} title)
