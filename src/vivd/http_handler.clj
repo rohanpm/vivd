@@ -1,6 +1,7 @@
 (ns vivd.http_handler
   (:require [vivd
              [proxy :as proxy]
+             [container :as container]
              [index :as index]
              [index-page :as index-page]
              [build :as build]
@@ -141,9 +142,15 @@
   (->> resource-handler*
        (if-uri-starts-with "/public/")))
 
+(defn- refresh-status [index]
+  (let [containers (index/vals index)
+        containers (map container/with-refreshed-status containers)]
+    (doall (map #(index/update index %) containers))))
+
 (defn make-handler [config]
   "Returns a top-level handler for all HTTP requests"
   (let [index          (index/make)
+        _              (refresh-status index)
         index-handler  (make-index-handler index)
         _              (reap/run-async config index)
         builder        (build/builder config index)

@@ -94,8 +94,9 @@
     container-id))
 
 (defn running? [{:keys [docker-container-id]}]
-  (let [inspect (docker-inspect docker-container-id)]
-    (get-in inspect [:State :Running])))
+  (if docker-container-id
+    (let [inspect (docker-inspect docker-container-id)]
+      (get-in inspect [:State :Running]))))
 
 (defn ensure-started [config {:keys [docker-container-id] :as c}]
   (let [docker-container-id (or docker-container-id (create-container config c))
@@ -217,3 +218,17 @@
   (let [inspect (docker-inspect docker-container-id)
         timestr (get-in inspect [:State :StartedAt])]
     (clj-time.format/parse timestr)))
+
+(defn with-refreshed-status [{:keys [docker-container-id] :as c}]
+  "Intended to be called when vivd is starting.
+   Refreshes stale container :status value."
+  (let [status (cond
+                (not docker-container-id)
+                :new
+
+                (not (running? c))
+                :stopped
+
+                :else
+                (:status c))]
+    (merge c {:status status})))
