@@ -30,19 +30,22 @@
                  (javascripts))))
 
 (defn container-link [c]
-  (td (a {:href (str (:id c) "/")
-          :class "container-link"}
-         (:id c))))
+  (a {:href (str (:id c) "/")
+      :class "container-link"}
+     (:id c)))
+
+(defn container-git [{:keys [git-revision]}]
+  git-revision)
 
 (defn container-last-used [{:keys [timestamp]}]
-  (td
-   (abbr {:class "timeago"
-          :title (str timestamp)}
-         (str timestamp))))
+  (abbr {:class "timeago"
+         :title (str timestamp)}
+        (str timestamp)))
 
 (defn container-columns [c]
-  [(container-link c)
-   (container-last-used c)])
+  (clj-map td [(container-link c)
+               (container-git c)
+               (container-last-used c)]))
 
 (defn container-row [container]
   (apply tr
@@ -53,9 +56,10 @@
 
 (defn container-table-header []
   (thead
-   (tr
-    (td "ID")
-    (td "Last Used"))))
+   (apply tr
+    (clj-map td ["ID"
+                 "Git"
+                 "Last Used"]))))
 
 (defn container-table [containers]
   (apply table {:class "table table-striped"}
