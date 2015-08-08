@@ -34,8 +34,39 @@
       :class "container-link"}
      (:id c)))
 
-(defn container-git [{:keys [git-revision]}]
-  git-revision)
+(defn remove-leading [^String from ^String remove]
+  (if (.startsWith from remove)
+    (.substring from (.length remove))))
+
+(defn abbr-for-gerrit [ref-end]
+  (let [[_ change ps] (clojure.string/split ref-end #"/")]
+    (abbr {:title (str "refs/changes/" ref-end)}
+          (span {:class "small text-uppercase"}
+                "change"
+                change
+                "patchset"
+                ps))))
+
+(defn abbr-for-ref [ref]
+  (if-let [simple (or (remove-leading ref "refs/heads/")
+                      (remove-leading ref "refs/tags/"))]
+    (abbr {:title ref} simple)
+    (if-let [chg (remove-leading ref "refs/changes/")]
+      (abbr-for-gerrit chg))))
+
+(defn git-ref-info [{:keys [git-ref]}]
+  (or (abbr-for-ref git-ref)
+      git-ref))
+
+(defn git-revision-info [{:keys [git-revision]}]
+  (code
+   git-revision))
+
+(defn container-git [c]
+  (span
+   (git-ref-info c)
+   (br-)
+   (git-revision-info c)))
 
 (defn container-last-used [{:keys [timestamp]}]
   (abbr {:class "timeago"
