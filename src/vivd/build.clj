@@ -3,6 +3,8 @@
             [clojure.string :refer [trim]]
             [clojure.tools.logging :as log]
             [vivd.utils :refer :all]
+            [vivd
+             [index :as index]]
             [clojure.java.io :as io]
             [clojure.data.json :as json])
   (:import org.apache.commons.io.FileUtils))
@@ -45,9 +47,10 @@
     (log/debug "docker build - " result)
     built))
 
-(defn- do-build [config out c]
+(defn- do-build [config index out c]
   (try
     (log/debug "Will build:" c)
+    (index/update index (merge c {:status :building}))
     (let [dirf (-> (builddir) (io/file))
           _    (ensure-directory-exists dirf)]
       (FileUtils/forceDelete dirf)
@@ -55,14 +58,15 @@
       (setup-src dirf c)
       (setup-dockerfile config dirf c)
       (->> (docker-build dirf)
-           (>!! out)))
+           (>!! out))
+      (index/update index (merge c {:status :built})))
     (finally (close! out))))
 
-(defn builder [config]
+(defn builder [config index]
   (let [ch (chan 10)]
     (go-loop []
       (try
-        (apply do-build config (<! ch))
+        (apply do-build config index (<! ch))
         (catch Exception e
           (log/error "Build failed:" e)))
       (recur))

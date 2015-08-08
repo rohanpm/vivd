@@ -59,6 +59,7 @@
           c                              {:id           id
                                           :git-ref      git-ref
                                           :git-revision git-revision
+                                          :status       :new
                                           :timestamp    (clj-time.core/now)}]
       (index/update index c)
       (log/info "Created:" data "id:" id)
@@ -145,7 +146,7 @@
   (let [index          (index/make)
         index-handler  (make-index-handler index)
         _              (reap/run-async config index)
-        builder        (build/builder config)
+        builder        (build/builder config index)
         create-handler (make-create-handler index)
         proxy-handler  (make-proxy-handler config builder index)
         redirect-handler (make-redirect-handler index)]

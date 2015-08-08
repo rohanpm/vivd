@@ -75,10 +75,47 @@
          :title (str timestamp)}
         (str timestamp)))
 
+(defn status-attributes [status]
+  (cond
+   (= status :up)
+   {:button-type "success" :text "Running" :icon-type "play"}
+
+   (= status :new)
+   {:button-type "info" :text "New" :icon-type "pause"}
+
+   (= status :building)
+   {:button-type "warning" :text "Building" :icon-type "hourglass"}
+
+   (= status :built)
+   {:button-type "warning" :text "Built" :icon-type "hourglass"}
+
+   (= status :starting)
+   {:button-type "warning" :text "Starting" :icon-type "hourglass"}
+
+   (or (= status :stopping) (= status :stopped))
+   {:button-type "danger" :text "Stopped" :icon-type "stop"}
+
+   :else
+   {:button-type "default" :text "Unknown" :icon-type "question-sign"}))
+
+(defn glyphicon [name]
+  (span {:class       (str "glyphicon glyphicon-" name)
+         :aria-hidden true}))
+
+(defn container-status [{:keys [status]}]
+  (let [{:keys [button-type text icon-type]} (status-attributes status)]
+    (button {:type "button"
+             :class (str "btn btn-block btn-" button-type)}
+            (span {:class "pull-left"}
+                  "&nbsp;&nbsp;"
+                  (if icon-type (glyphicon icon-type)))
+            text)))
+
 (defn container-columns [c]
   (clj-map td [(container-link c)
                (container-git c)
-               (container-last-used c)]))
+               (container-last-used c)
+               (container-status c)]))
 
 (defn container-row [container]
   (apply tr
@@ -92,7 +129,8 @@
    (apply tr
     (clj-map td ["ID"
                  "Git"
-                 "Last Used"]))))
+                 "Last Used"
+                 "Status"]))))
 
 (defn container-table [containers]
   (apply table {:class "table table-striped"}

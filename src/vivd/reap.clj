@@ -19,10 +19,12 @@
        (sort-by :timestamp)
        (reverse)))
 
-(defn- stop-containers [containers]
+(defn- stop-containers [index containers]
   (doseq [c containers]
     (log/info "Stopping: " (:id c))
-    (container/stop c)))
+    (index/update index (merge c {:status :stopping}))
+    (container/stop c)
+    (index/update index (merge c {:status :stopped}))))
 
 (defn- remove-containers [index containers]
   (doseq [{:keys [id docker-container-id] :as c} containers]
@@ -39,7 +41,7 @@
         running    (filter try-container-running? containers)
         running    (by-timestamp-descending running)
         to-stop    (drop max-containers-up running)]
-    (stop-containers to-stop)))
+    (stop-containers index to-stop)))
 
 (defn- reap-stopped [{:keys [max-containers]} {:keys [index-ref] :as index}]
   (let [containers (vals @index-ref)

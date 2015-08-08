@@ -61,6 +61,9 @@
         _       (index/update index c)
         req     (get-proxy-request request config c)
         _       (log/debug "proxy request" req)
+        _       (if (not (= :up (:status c)))
+                  (index/update index (merge c {:status :starting})))
         resp    (try-request config req c)
+        _       (index/update index (merge c {:status :up}))
         _       (log/debug "remote response" resp)]
     resp))

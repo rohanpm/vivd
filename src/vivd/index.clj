@@ -7,7 +7,6 @@
             [clj-time.coerce :as time-coerce]
             [clojure.tools.logging :as log]
             [vivd
-             [container :as container]
              [utils :refer :all]])
   (:import org.apache.commons.io.FileUtils))
 
