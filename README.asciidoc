@@ -14,45 +14,56 @@ system.
 +data/config.clj+ should contain configuration items as in the following
 example:
 
-  {
-    ; time (in seconds) permitted for HTTP to become responsive
-    ; on new containers
-    :startup-timeout 60,
+..............................................................
+{
+  ; time (in seconds) permitted for HTTP to become responsive
+  ; on new containers
+  :startup-timeout 60,
 
-    ; max number of containers allowed to exist
-    :max-containers 200,
+  ; header/title displayed on the index page
+  :title "Containers",
 
-    ; max number of containers allowed to be running
-    :max-containers-up 4,
-  
-    ; the git URL used for fetching source
-    :git-url "https://github.com/docker-training/webapp.git",
-  
-    ; the source image used
-    :docker-source-image "httpd:2.4",
-  
-    ; http port within the container
-    :docker-http-port 80,
-  
-    ; location within the container where code shall be placed
-    :docker-code-path "/usr/local/apache2/htdocs/code",
+  ; default URL within container to link to from index page
+  ; (e.g., if there is something more useful than "/")
+  :default-url "/app",
 
-    ; ENTRYPOINT and CMD used for built images; can be omitted.
-    ; Array form only.
-    :docker-entrypoint ["/usr/local/apache2/bin/httpd"],
-    :docker-cmd ["-DFOREGROUND"]
-  }
+  ; max number of containers allowed to exist
+  :max-containers 200,
+
+  ; max number of containers allowed to be running
+  :max-containers-up 4,
+  
+  ; the git URL used for fetching source
+  :git-url "https://github.com/docker-training/webapp.git",
+  
+  ; the source image used
+  :docker-source-image "httpd:2.4",
+  
+  ; http port within the container
+  :docker-http-port 80,
+  
+  ; location within the container where code shall be placed
+  :docker-code-path "/usr/local/apache2/htdocs/code",
+
+  ; ENTRYPOINT and CMD used for built images; can be omitted.
+  ; Array form only.
+  :docker-entrypoint ["/usr/local/apache2/bin/httpd"],
+  :docker-cmd ["-DFOREGROUND"]}
+..............................................................
 
 == Image Requirements ==
 
-The docker image:
+The requirements on the configured docker image and application include:
 
-- must expose an HTTP port
+- must expose an HTTP port, at +:docker-http-port+ (default 80)
 
 - will have the git working tree (only) from the given revision checked out at
   the configured path
 
-- must start your application as the ENTRYPOINT
+- must start your application on startup; either from its own ENTRYPOINT/CMD
+  or from the +:docker-entrypoint+ / +:docker-cmd+ configured for vivd
+
+- should accept HTTP requests within +:startup-timeout+ seconds after starting
 
 == API ==
 
