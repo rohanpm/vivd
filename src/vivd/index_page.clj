@@ -29,8 +29,8 @@
          (concat (stylesheets)
                  (javascripts))))
 
-(defn container-link [c]
-  (a {:href (str (:id c) "/")
+(defn container-link [{:keys [default-url]} c]
+  (a {:href (str (:id c) default-url)
       :class "container-link"}
      (:id c)))
 
@@ -111,18 +111,18 @@
                   (if icon-type (glyphicon icon-type)))
             text)))
 
-(defn container-columns [c]
-  (clj-map td [(container-link c)
+(defn container-columns [config c]
+  (clj-map td [(container-link config c)
                (container-git c)
                (container-last-used c)
                (container-status c)]))
 
-(defn container-row [container]
+(defn container-row [config container]
   (apply tr
-         (container-columns container)))
+         (container-columns config container)))
 
-(defn container-rows [containers]
-  (clj-map container-row containers))
+(defn container-rows [config containers]
+  (clj-map (partial container-row config) containers))
 
 (defn container-table-header []
   (thead
@@ -132,12 +132,12 @@
                  "Last Used"
                  "Status"]))))
 
-(defn container-table [containers]
+(defn container-table [config containers]
   (apply table {:class "table table-striped"}
          (container-table-header)
-         (container-rows containers)))
+         (container-rows config containers)))
 
-(defn from-index [index]
+(defn from-index [{:keys [title] :as config} index]
   (let [ordered (index/vals index)
         ordered (sort-by :timestamp ordered)
         ordered (reverse ordered)]
@@ -147,5 +147,5 @@
       (vivd-head)
       (body
        (div {:class "container"}
-            (h1 "Containers")
-            (container-table ordered)))))))
+            (h1 {:class "text-center"} title)
+            (container-table config ordered)))))))
