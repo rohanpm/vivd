@@ -67,9 +67,9 @@ The requirements on the configured docker image and application include:
 
 == API ==
 
-=== POST /create ===
+=== POST /a/container ===
 
-POST a single JSON object to /create to register a new container.
+POST a single JSON object to /a/container to register a new container.
 The object must contain:
 
   git-ref::
@@ -86,7 +86,7 @@ request.
 
 Example:
 
-  $ curl -v -d '{"git-ref":"refs/heads/master","git-revision":"66be25e9da27c7deca3feb4835b887c659ee5ae3"}' http://localhost:8080/create
+  $ curl -v -d '{"git-ref":"refs/heads/master","git-revision":"66be25e9da27c7deca3feb4835b887c659ee5ae3"}' http://localhost:8080/a/container
   * About to connect() to localhost port 8080 (#0)
   *   Trying ::1...
   * Connected to localhost (::1) port 8080 (#0)

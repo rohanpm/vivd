@@ -5,33 +5,15 @@
              [index :as index]
              [index-page :as index-page]
              [build :as build]
-             [reap :as reap]]
+             [reap :as reap]
+             [api :as api]
+             [http :refer :all]]
             [ring.util.response :refer :all]
             [clojure.tools.logging :as log]
             [clojure.java.io :as io]
-            [clojure.data.json :as json]
-            [clojure.string :as str]
-            clj-time.core))
+            [clojure.string :as str]))
 
 (set! *warn-on-reflection* true)
-
-(defn- if-uri-is [desired-uri handler]
-  (fn [{:keys [uri] :as request}]
-    (if (= uri desired-uri)
-      (handler request))))
-
-(defn- if-uri-starts-with [desired-uri handler]
-  (fn [{:keys [^String uri] :as request}]
-    (if (.startsWith uri desired-uri)
-      (handler request))))
-
-(defn- ensuring-method [method handler]
-  (fn [request]
-    (let [request-method (:request-method request)]
-      (if (= request-method method)
-        (handler request)
-        {:status 405
-         :body (str "Method " request-method " not allowed")}))))
 
 (defn make-index-handler [config index]
   (->> (fn [request]
@@ -40,37 +22,6 @@
           :body (index-page/from-index config index)})
        (ensuring-method :get)
        (if-uri-is "/")))
-
-(defn- read-json-stream [stream]
-  (with-open [reader (io/reader stream)]
-    (json/read reader :key-fn keyword)))
-
-(def CHARS "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")
-(defn- generate-id []
-  (apply str (map (fn [_] (rand-nth CHARS)) (range 8))))
-
-(defn- make-create-handler* [index]
-  (fn [request]
-    (let [body                           (:body request)
-          data                           (read-json-stream body)
-          {:keys [git-ref git-revision]} data
-          _                              (assert git-ref "Missing git-ref in request")
-          _                              (assert git-revision "Missing git-revision in request")
-          id                             (generate-id)
-          c                              {:id           id
-                                          :git-ref      git-ref
-                                          :git-revision git-revision
-                                          :status       :new
-                                          :timestamp    (clj-time.core/now)}]
-      (index/update index c)
-      (log/info "Created:" data "id:" id)
-      {:status 201
-       :headers {"location" (str "/" id)}})))
-
-(defn- make-create-handler [index]
-  (->> (make-create-handler* index)
-       (ensuring-method :post)
-       (if-uri-is "/create")))
 
 (defn- augmented-proxy-request [request]
   (let [uri         (:uri request)
@@ -151,17 +102,12 @@
   "Returns a top-level handler for all HTTP requests"
   (let [index          (index/make)
         _              (refresh-status index)
-        index-handler  (make-index-handler config index)
         _              (reap/run-async config index)
         builder        (build/builder config index)
-        create-handler (make-create-handler index)
-        proxy-handler  (make-proxy-handler config builder index)
-        redirect-handler (make-redirect-handler index)]
+        all-handlers   [(make-redirect-handler index)
+                        resource-handler
+                        (make-index-handler config index)
+                        (api/make-create-handler index)
+                        (make-proxy-handler config builder index)]]
     (fn [request]
-      (let [^String uri (:uri request)]
-        (log/debug uri)
-        (or (redirect-handler request)
-            (resource-handler request)
-            (index-handler request)
-            (create-handler request)
-            (proxy-handler request))))))
+      (first (keep #(% request) all-handlers)))))
