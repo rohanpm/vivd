@@ -106,10 +106,13 @@
   (let [{:keys [button-type text icon-type]} (status-attributes status)]
     (button {:type "button"
              :class (str "btn btn-block btn-" button-type)}
-            (span {:class "pull-left"}
-                  "&nbsp;&nbsp;"
-                  (if icon-type (glyphicon icon-type)))
-            text)))
+            (if icon-type
+              (span {:class "pull-left"}
+                    "&nbsp;"
+                    (glyphicon icon-type)
+                    "&nbsp;"))
+            (span {:class "hidden-xs"}
+                  text))))
 
 (defn container-columns [config c]
   (clj-map td [(container-link config c)
