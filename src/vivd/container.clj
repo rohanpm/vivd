@@ -66,7 +66,7 @@
 
 (defn- docker-rm [did]
   (docker-inspect-evict did)
-  (sh! (docker) "rm" did))
+  (sh! (docker) "rm" "-v" did))
 
 (defn- docker-rmi [image-id]
   (sh! (docker) "rmi" image-id))
