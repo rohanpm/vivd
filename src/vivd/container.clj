@@ -11,6 +11,8 @@
             [clojure.core.async :refer [<!!]]
             [clojure.string :refer [trim]]
             [clj-time.coerce :as time-coerce]
+            [clj-time.core :as time]
+            [clj-http.client :as http]
             clj-time.format))
 
 (set! *warn-on-reflection* true)
@@ -220,16 +222,54 @@
         timestr (get-in inspect [:State :StartedAt])]
     (clj-time.format/parse timestr)))
 
-(defn with-refreshed-status [{:keys [docker-container-id] :as c}]
+(defn- starting-container-overdue? [{:keys [startup-timeout] :as config} {:keys [timestamp] :as c}]
+  (let [now      (time/now)
+        how-long (time/interval timestamp now)
+        timeout  (* 4 startup-timeout)
+        secs     (time/in-seconds how-long)]
+    (< timeout secs)))
+
+(defn- test-starting-container [{:keys [default-url startup-timeout] :as config} {:keys [timestamp] :as c}]
+  (log/debug "Checking starting container" c)
+  ; If the container is far beyond the timeout, don't even try...
+  (if (starting-container-overdue? config c)
+    (do
+      (log/debug "Container is overdue: " c)
+      :timed-out)
+    (let [[ip port] (get-host-port config c)
+          request   {:uri              default-url
+                     :scheme           :http
+                     :throw-exceptions true
+                     :server-name      ip
+                     :server-port      port
+                     :follow-redirects false
+                     :request-method   :get
+                     :conn-timeout     10000
+                     :socket-timeout   10000}]
+      (try
+        (http/request request)
+        (log/debug "Successfully contacted container" c)
+        :up
+        (catch Exception e
+          (log/debug "Container not (yet?) accessible" c e)        
+          :starting)))))
+
+(defn- running-status? [status]
+  (some #(= status %) [:up :starting]))
+
+(defn with-refreshed-status [config {:keys [docker-container-id status] :as c}]
   "Refreshes stale container :status value."
   ; Need to evict, since the whole point is to get the up-to-date status...
   (docker-inspect-evict docker-container-id)
   (let [status (cond
-                (not docker-container-id)
+                (and (not docker-container-id) (not (= status :building)))
                 :new
 
-                (not (running? c))
+                (and (running-status? status) (not (running? c)))
                 :stopped
+
+                (= :starting status)
+                (test-starting-container config c)
 
                 :else
                 (:status c))]

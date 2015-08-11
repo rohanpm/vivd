@@ -93,7 +93,10 @@
    {:button-type "warning" :text "Starting" :icon-type "hourglass"}
 
    (or (= status :stopping) (= status :stopped))
-   {:button-type "danger" :text "Stopped" :icon-type "stop"}
+   {:button-type "info" :text "Stopped" :icon-type "stop"}
+
+   (= status :timed-out)
+   {:button-type "danger" :text "Timed Out" :icon-type "flag"}
 
    :else
    {:button-type "default" :text "Unknown" :icon-type "question-sign"}))
