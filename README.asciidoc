@@ -50,6 +50,10 @@ example:
   :docker-entrypoint ["/usr/local/apache2/bin/httpd"],
   :docker-cmd ["-DFOREGROUND"],
 
+  ; Additional arguments passed to `docker run' when starting a container.
+  ; Useful for adding volumes or running in privileged mode
+  :docker-run-arguments ["--privileged"],
+
   ; HTTP server configuration (e.g. customize host/port binding).
   ; See valid options at: https://ring-clojure.github.io/ring/ring.adapter.jetty.html#var-run-jetty
   :jetty-config {

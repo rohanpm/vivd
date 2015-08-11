@@ -86,8 +86,11 @@
           (docker-inspect-evict did)
           (recur (inc attempt) (docker-inspect did)))))))
 
-(defn create-container [{:keys [docker-http-port] :as config} {:keys [docker-image-id] :as c}]
-  (let [container-id (-> (sh! "docker" "run" "-d" "-p" (str "127.0.0.1::" docker-http-port) docker-image-id)
+(defn create-container [{:keys [docker-http-port docker-run-arguments] :as config} {:keys [docker-image-id] :as c}]
+  (let [cmd          (concat ["docker" "run" "-d" "-p" (str "127.0.0.1::" docker-http-port)]
+                             docker-run-arguments
+                             [docker-image-id])
+        container-id (-> (apply sh! cmd)
                          (:out)
                          (trim))
         _            (log/info "Created container" container-id "from image" docker-image-id)]
