@@ -221,8 +221,9 @@
     (clj-time.format/parse timestr)))
 
 (defn with-refreshed-status [{:keys [docker-container-id] :as c}]
-  "Intended to be called when vivd is starting.
-   Refreshes stale container :status value."
+  "Refreshes stale container :status value."
+  ; Need to evict, since the whole point is to get the up-to-date status...
+  (docker-inspect-evict docker-container-id)
   (let [status (cond
                 (not docker-container-id)
                 :new
