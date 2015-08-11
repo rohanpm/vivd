@@ -93,18 +93,9 @@
   (->> resource-handler*
        (if-uri-starts-with "/public/")))
 
-(defn- refresh-status [index]
-  (let [containers (index/vals index)
-        containers (map container/with-refreshed-status containers)]
-    (doall (map #(index/update index %) containers))))
-
-(defn make-handler [config]
+(defn make [config {:keys [index builder]}]
   "Returns a top-level handler for all HTTP requests"
-  (let [index          (index/make)
-        _              (refresh-status index)
-        _              (reap/run-async config index)
-        builder        (build/builder config index)
-        all-handlers   [(make-redirect-handler index)
+  (let [all-handlers   [(make-redirect-handler index)
                         resource-handler
                         (make-index-handler config index)
                         (api/make-create-handler index)

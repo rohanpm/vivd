@@ -4,6 +4,7 @@
              [utils :refer :all]
              http_handler
              [container :as container]
+             services
              index]
             [ring.adapter.jetty-async :as ring-jetty]
             [ring.middleware.reload :as reload]
@@ -34,8 +35,8 @@
         config       (merge (default-config) config)
         jetty-config (or (:jetty-config config) {})
         jetty-config (merge (default-jetty-config) jetty-config)
-        _      (log/debug "Config:" config jetty-config)]
-    (ring-jetty/run-jetty-async (-> ;(partial vivd.http_handler/handler config)
-                                    (vivd.http_handler/make-handler config)
+        _            (log/debug "Config:" config jetty-config)
+        services     (vivd.services/make config)]
+    (ring-jetty/run-jetty-async (-> (vivd.http_handler/make config services)
                                     reload/wrap-reload)
                                 jetty-config)))

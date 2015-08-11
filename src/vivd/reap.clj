@@ -66,7 +66,7 @@
       (Thread/sleep (* 1000 60 10))
       (recur))))
 
-(defn run-async [config index]
+(defn make [config index]
   "Start a reaper thread, in the background."
   (thread
     (run config index)))
