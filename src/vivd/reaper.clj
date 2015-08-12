@@ -36,15 +36,16 @@
       (catch Exception e
         (log/warn "Problem removing:" id e)))))
 
-(defn- reap-running [{:keys [max-containers-up]} {:keys [index-ref] :as index}]
-  (let [containers (vals @index-ref)
+(defn- reap-running [{:keys [max-containers-up]} index]
+  {:pre [max-containers-up]}
+  (let [containers (index/vals index)
         running    (filter try-container-running? containers)
         running    (by-timestamp-descending running)
         to-stop    (drop max-containers-up running)]
     (stop-containers index to-stop)))
 
-(defn- reap-stopped [{:keys [max-containers]} {:keys [index-ref] :as index}]
-  (let [containers (vals @index-ref)
+(defn- reap-stopped [{:keys [max-containers]} index]
+  (let [containers (index/vals index)
         stopped    (remove try-container-running? containers)
         stopped    (by-timestamp-descending stopped)
         to-remove  (drop max-containers stopped)]
