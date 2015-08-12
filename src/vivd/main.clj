@@ -2,7 +2,7 @@
   (:gen-class)
   (:require [vivd 
              [utils :refer :all]
-             http_handler
+             http-handler
              [container :as container]
              services
              index]
@@ -37,6 +37,6 @@
         jetty-config (merge (default-jetty-config) jetty-config)
         _            (log/debug "Config:" config jetty-config)
         services     (vivd.services/make config)]
-    (ring-jetty/run-jetty-async (-> (vivd.http_handler/make config services)
+    (ring-jetty/run-jetty-async (-> (vivd.http-handler/make config services)
                                     reload/wrap-reload)
                                 jetty-config)))

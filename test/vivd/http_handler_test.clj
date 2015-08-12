@@ -1,13 +1,13 @@
-(ns vivd.http_handler-test
-  (:require [vivd.http_handler :refer :all]
+(ns vivd.http-handler-test
+  (:require [vivd.http-handler :refer :all]
             [midje.sweet :refer :all]))
 
 (def FAKE-INDEX {:index-ref (ref {"a1b2c3" {}
                                   "aabbcc" {}})})
 
-(def request-referred-from-container? #'vivd.http_handler/request-referred-from-container?)
-(def redirect-handler (#'vivd.http_handler/make-redirect-handler FAKE-INDEX))
-(def vivd-url #'vivd.http_handler/vivd-url)
+(def request-referred-from-container? #'vivd.http-handler/request-referred-from-container?)
+(def redirect-handler (#'vivd.http-handler/make-redirect-handler FAKE-INDEX))
+(def vivd-url #'vivd.http-handler/vivd-url)
 
 (facts "vivd-url"
   (fact "derives from Host header"

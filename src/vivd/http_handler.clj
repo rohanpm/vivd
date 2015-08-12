@@ -1,4 +1,4 @@
-(ns vivd.http_handler
+(ns vivd.http-handler
   (:require [vivd
              [proxy :as proxy]
              [container :as container]
