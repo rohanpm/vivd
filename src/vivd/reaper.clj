@@ -1,4 +1,4 @@
-(ns vivd.reap
+(ns vivd.reaper
   (:require [clojure.core.async :refer [thread]]
             [clojure.tools.logging :as log]
             [vivd

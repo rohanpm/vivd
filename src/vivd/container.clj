@@ -6,7 +6,7 @@
             [clojure.data.json :as json]
             [clojure.tools.logging :as log]
             [vivd.utils :refer :all]
-            [vivd.build :as build]
+            [vivd.builder :as builder]
             [clojure.core.cache :as cache]
             [clojure.core.async :refer [<!!]]
             [clojure.string :refer [trim]]
@@ -184,7 +184,7 @@
         _      (log/debug "config now" config)
         _      (ensure-git-fetched config c)]
     (log/debug "requesting build")
-    (let [c (<!! (build/request-build builder c))]
+    (let [c (<!! (builder/request-build builder c))]
       (assert c (str "Container failed to build for " git-revision))
       c)))
 

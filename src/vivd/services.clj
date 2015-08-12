@@ -2,7 +2,7 @@
   (:require [vivd
              [index :as index]
              [container :as container]
-             reap
+             reaper
              refresher
              build]))
 
@@ -11,7 +11,7 @@
 (defn make [config]
   "Starts and returns various background services (threads)."
   (let [index          (index/make)
-        reaper         (vivd.reap/make config index)
+        reaper         (vivd.reaper/make config index)
         refresher      (vivd.refresher/make config index)
         builder        (vivd.build/builder config index)]
     {:index     index

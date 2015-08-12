@@ -1,4 +1,4 @@
-(ns vivd.build
+(ns vivd.builder
   (:require [clojure.core.async :refer [chan >!! >! <! go-loop close!]]
             [clojure.string :refer [trim]]
             [clojure.tools.logging :as log]
@@ -73,7 +73,7 @@
         (>!! out updated-c))
       (do-build* config index out c))))
 
-(defn builder [config index]
+(defn make [config index]
   (let [ch (chan 10)]
     (go-loop []
       (try
