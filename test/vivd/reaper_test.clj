@@ -2,25 +2,14 @@
   (:require [midje.sweet :refer :all]
             vivd.reaper
             vivd.container
+            [vivd.index-test :refer :all]
             [vivd.index :as index]
             [clojure.tools.logging :as log]
-            [clojure.core.async :refer [sliding-buffer chan]]
             [clj-time.core :refer [minutes ago]]))
 
 
 (def do-reap
   #'vivd.reaper/do-reap)
-
-(defn merge-by-id [map {:keys [id] :as val}]
-  (merge map {id val}))
-
-(defn index-for [vals]
-  (let [index-map (reduce merge-by-id {} vals)]
-    {:index-ref        (atom index-map)
-     :file-writer-chan (chan (sliding-buffer 1))}))
-
-(defn index-merge [& indexes]
-  (index-for (mapcat #(index/vals %) indexes)))
 
 (defn index-with-too-many-stopped []
   (index-for #{{:id                  "aaaaa1"
