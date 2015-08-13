@@ -40,8 +40,15 @@
   {:pre [max-containers-up]}
   (let [containers (index/vals index)
         running    (filter try-container-running? containers)
+        run-count  (count running)
+        stop-count (- run-count max-containers-up)
         running    (by-timestamp-descending running)
-        to-stop    (drop max-containers-up running)]
+        ; do not reap starting containers because they're more likely to be in a
+        ; risky state for reaping (e.g. halfway through initializing a
+        ; database). They'll become reapable later, if the refresher sets
+        ; them to started or timed out.
+        running    (remove #(= :starting (:status %)) running)
+        to-stop    (take stop-count (reverse running))]
     (stop-containers index to-stop)))
 
 (defn- reap-stopped [{:keys [max-containers]} index]

@@ -67,6 +67,24 @@
                  :status              :up
                  :timestamp           (-> 70 minutes ago)}})))
 
+(defn index-with-starting-and-up []
+  (index-for #{{:docker-container-id "1c"
+                :id                  "c1"
+                :status              :up
+                :timestamp           (-> 40 minutes ago)}
+               {:docker-container-id "2c"
+                :id                  "c2"
+                :status              :starting
+                :timestamp           (-> 50 minutes ago)}
+               {:docker-container-id "3c"
+                :id                  "c3"
+                :status              :starting
+                :timestamp           (-> 60 minutes ago)}
+               {:docker-container-id "4c"
+                :id                  "c4"
+                :status              :up
+                :timestamp           (-> 70 minutes ago)}}))
+
 (defn test-config []
   {:max-containers    4
    :max-containers-up 2})
@@ -140,4 +158,12 @@
                                :container-remove #{"aaaaa5"}
                                :index-remove     #{"aaaaa5" "aaaaa6"}
                                :index-set-status {"b3" :stopped
-                                                  "b4" :stopped}}))))
+                                                  "b4" :stopped}})))
+
+  (let [index (index-with-starting-and-up)]
+    (fact "does not reap starting containers"
+      (reaped-containers {:index index
+                          :running-containers ["1c" "2c" "3c" "4c"]})
+      => (expected-reap index {:container-stop   #{"c4" "c1"}
+                               :index-set-status {"c4" :stopped
+                                                  "c1" :stopped}}))))
