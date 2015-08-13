@@ -4,7 +4,7 @@
              [container :as container]
              reaper
              refresher
-             build]))
+             builder]))
 
 (set! *warn-on-reflection* true)
 
@@ -13,7 +13,7 @@
   (let [index          (index/make)
         reaper         (vivd.reaper/make config index)
         refresher      (vivd.refresher/make config index)
-        builder        (vivd.build/builder config index)]
+        builder        (vivd.builder/make config index)]
     {:index     index
      :reaper    reaper
      :refresher refresher
