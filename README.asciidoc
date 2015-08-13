@@ -82,7 +82,8 @@ The requirements on the configured docker image and application include:
 === POST /a/container ===
 
 POST a single JSON object to /a/container to register a new container.
-The object must contain:
+
+Object:
 
   git-ref::
     A git ref to be fetched
@@ -90,8 +91,24 @@ The object must contain:
   git-revision::
     A git commit ID, which must be reachable from git-ref
 
-A successful create will give an HTTP 201 status code, with a Location header
-pointing at the container.
+Query parameters:
+
+  unique-git-revision::
+    If 1, do not register a new container if one already exists for that
+    git revision
+
+Response status codes:
+
+  201::
+    Container was successfully registered, see Location.
+
+  302::
+    A container already exists for this git-revision, see Location.
+
+Response headers:
+
+  Location::
+    The base URL of the registered container.
 
 Note that the image or container won't be built or started until it receives a
 request.
