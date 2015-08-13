@@ -9,9 +9,12 @@
 
 (set! *warn-on-reflection* true)
 
-(defn get-proxy-headers [request]
-  {"x-forwarded-for" (:remote-addr request)
-   "x-forwarded-host" (get-in request [:headers "host"])})
+(defn get-proxy-headers [{:keys [headers remote-addr]} ip port]
+  (merge headers
+         {"host"             ip
+          "connection"       "close"
+          "x-forwarded-for"  remote-addr
+          "x-forwarded-host" (headers "host")}))
 
 (defn get-proxy-request [request config c]
   (let [[ip port] (container/get-host-port config c)]
@@ -19,7 +22,7 @@
      {:uri (str "/" (:container-uri request))
       :scheme :http
       :throw-exceptions false
-      :headers (get-proxy-headers request)
+      :headers (get-proxy-headers request ip port)
       :server-name ip
       :server-port port
       :as :stream

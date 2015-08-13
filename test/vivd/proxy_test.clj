@@ -34,7 +34,9 @@
     (fact "returns expected values"
       (get-proxy-request base-request test-config test-container)
       => (expected-request {:uri "/foo/bar"
-                            :headers {"x-forwarded-for"  "10.0.0.1"
+                            :headers {"host"             "127.0.0.2"
+                                      "connection"       "close"
+                                      "x-forwarded-for"  "10.0.0.1"
                                       "x-forwarded-host" "example.com"}}))
 
     (fact "passes through expected values"
@@ -43,4 +45,11 @@
                                               :body           "some-body"}) test-config test-container)
       => (contains {:request-method :foo
                     :query-string   "hi&there"
-                    :body           "some-body"}))))
+                    :body           "some-body"}))
+
+    (fact "passes through headers"
+      (get-proxy-request (merge base-request {:headers {"content-type" "text/plain"
+                                                        "accept"       "application/json"}})
+                         test-config test-container)
+      => (contains {:headers (contains {"content-type" "text/plain"
+                                        "accept"       "application/json"})}))))
