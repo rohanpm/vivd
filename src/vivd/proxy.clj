@@ -10,11 +10,12 @@
 (set! *warn-on-reflection* true)
 
 (defn get-proxy-headers [{:keys [headers remote-addr]} ip port]
-  (merge headers
-         {"host"             ip
-          "connection"       "close"
-          "x-forwarded-for"  remote-addr
-          "x-forwarded-host" (headers "host")}))
+  (-> headers
+      (dissoc "content-length")
+      (merge {"host"             ip
+              "connection"       "close"
+              "x-forwarded-for"  remote-addr
+              "x-forwarded-host" (headers "host")})))
 
 (defn get-proxy-request [request config c]
   (let [[ip port] (container/get-host-port config c)]

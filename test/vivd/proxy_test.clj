@@ -52,4 +52,9 @@
                                                         "accept"       "application/json"}})
                          test-config test-container)
       => (contains {:headers (contains {"content-type" "text/plain"
-                                        "accept"       "application/json"})}))))
+                                        "accept"       "application/json"})}))
+    
+    (fact "strips content-length"
+      (get-proxy-request (merge base-request {:headers {"content-length" "22"}})
+                         test-config test-container)
+      =not=> (contains {:headers (contains {"content-length" anything})}))))
