@@ -6,6 +6,7 @@
                  [org.clojure/data.json "0.2.6"]
                  [org.clojure/core.cache "0.6.4"]
                  [com.ninjudd/ring-async "0.2.0"]
+                 [compojure "1.4.0"]
                  [clj-http "2.0.0"]
                  [clj-template "1.0.1"]
                  [log4j/log4j "1.2.17"]

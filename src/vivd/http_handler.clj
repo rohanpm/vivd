@@ -6,6 +6,7 @@
              [index-page :as index-page]
              [api :as api]
              [http :refer :all]]
+            [vivd.api.containers :as api-containers]
             [ring.util.response :refer :all]
             [clojure.tools.logging :as log]
             [clojure.java.io :as io]
@@ -91,12 +92,13 @@
   (->> resource-handler*
        (if-uri-starts-with "/public/")))
 
-(defn make [config {:keys [index builder]}]
+(defn make [config {:keys [index builder] :as services}]
   "Returns a top-level handler for all HTTP requests"
   (let [all-handlers   [(make-redirect-handler index)
                         resource-handler
                         (make-index-handler config index)
                         (api/make-create-handler index)
+                        (api-containers/make services)
                         (make-proxy-handler config builder index)]]
     (fn [request]
       (first (keep #(% request) all-handlers)))))
