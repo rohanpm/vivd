@@ -11,8 +11,10 @@
     {:response   response
      :index-vals (index/vals index)}))
 
-(defn str-stream [str]
-  (-> (java.io.StringReader. str) clojure.lang.LineNumberingPushbackReader.))
+(defn str-stream [^String str]
+  (let [bytes  (.getBytes str "UTF-8")
+        stream (java.io.ByteArrayInputStream. bytes)]
+    stream))
 
 (facts "create-handler"
   (let [existing-container {:id "aBcD" :git-revision "00112233"}

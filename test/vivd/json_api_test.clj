@@ -1,5 +1,6 @@
 (ns vivd.json-api-test
   (:require [vivd.json-api :refer [wrap-json-api]]
+            [vivd.api-test :refer [str-stream]]
             [midje.sweet :refer :all]))
 
 (def json-api-content-type "application/vnd.api+json")
@@ -28,7 +29,7 @@
     => (contains {:status 200}))
 
   (fact "refuses body with wrong content-type"
-    (simple-handler {:body "{}"})
+    (simple-handler {:body (str-stream "{}")})
     => (contains {:status 415})
 
     (simple-handler {:headers {"content-type" "quux"}, :body "{}"})
@@ -71,3 +72,9 @@
   (fact "cannot be set to type with parameters only"
     (test-handler {:status 200} {:headers {"accept" "application/vnd.api+json; ext=some-extension"}})
     => (contains {:status 406})))
+
+(facts "response body"
+  (fact "is serialized as JSON"
+    (test-handler {:status 200, :body {:data {:id "foo", :type "x"}}})
+    => (contains {:status 200,
+                  :body   "{\"data\":{\"id\":\"foo\",\"type\":\"x\"}}"})))

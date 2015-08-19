@@ -5,9 +5,15 @@
 
 (def json-api-content-type "application/vnd.api+json")
 
+; FIXME: this seems dodgy.
+(defn- body-empty? [^java.io.InputStream body]
+  (if (not body)
+    true
+    (= 0 (.available body))))
+
 (defn- request-content-type-ok? [{:keys [headers body] :or {headers {}}}]
   (let [content-type (headers "content-type")]
-    (or (and (not content-type) (not body))
+    (or (and (not content-type) (body-empty? body))
         (= content-type json-api-content-type))))
 
 (defn- request-accept-ok? [{:keys [headers] :or {headers {}}}]
@@ -40,6 +46,17 @@
         {:status 500}
         (merge response {:headers (merge headers {"content-type" json-api-content-type})})))))
 
+(defn- encode-body [data]
+  ; TODO: validate!
+  (json/write-str data))
+
+(defn- wrap-response-body [handler]
+  (fn [request]
+    (let [{:keys [body] :as response} (handler request)]
+      (if body
+        (merge response {:body (encode-body body)})
+        response))))
+
 (defn wrap-json-api
   ([handler]
      (wrap-json-api handler {}))
@@ -48,4 +65,5 @@
      (-> handler
          (wrap-request-content-type)
          (wrap-request-accept)
+         (wrap-response-body)
          (wrap-response-content-type))))
