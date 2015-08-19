@@ -1,7 +1,9 @@
 (ns vivd.json-api
   (:require [clojure.tools.logging :as log]
             [clojure.data.json :as json]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [schema.core :as s]
+            vivd.json-api.schema))
 
 (def json-api-content-type "application/vnd.api+json")
 
@@ -50,12 +52,26 @@
   ; TODO: validate!
   (json/write-str data))
 
-(defn- wrap-response-body [handler]
+(defn- wrap-modify-body [handler modify-body]
   (fn [request]
     (let [{:keys [body] :as response} (handler request)]
       (if body
-        (merge response {:body (encode-body body)})
+        (merge response {:body (modify-body body)})
         response))))
+
+(defn- wrap-encode-response-body [handler]
+  (wrap-modify-body handler encode-body))
+
+(defn- wrap-validate-response-body [handler]
+;  (wrap-modify-body handler (partial s/validate vivd.json-api.schema/Document))
+  (fn [request]
+    (let [{:keys [body] :as response} (handler request)
+          bad-parts                   (s/check vivd.json-api.schema/MaybeDocument body)]
+      (if bad-parts
+        {:status 500,
+         :body   (pr-str bad-parts)}
+        response))))
+
 
 (defn wrap-json-api
   ([handler]
@@ -65,5 +81,6 @@
      (-> handler
          (wrap-request-content-type)
          (wrap-request-accept)
-         (wrap-response-body)
+         (wrap-validate-response-body)
+         (wrap-encode-response-body)
          (wrap-response-content-type))))

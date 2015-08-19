@@ -77,4 +77,12 @@
   (fact "is serialized as JSON"
     (test-handler {:status 200, :body {:data {:id "foo", :type "x"}}})
     => (contains {:status 200,
-                  :body   "{\"data\":{\"id\":\"foo\",\"type\":\"x\"}}"})))
+                  :body   "{\"data\":{\"id\":\"foo\",\"type\":\"x\"}}"}))
+
+  (fact "refuses incorrect body"
+    (test-handler {:status 200, :body {:foo :bar}})
+    => (contains {:status 500})
+
+    ; cannot have id/type within attributes
+    (test-handler {:status 200, :body {:data {:id "foo", :type "x", :attributes {:type "bar"}}}})
+    => (contains {:status 500})))

@@ -9,6 +9,7 @@
                  [clj-http "2.0.0"]
                  [clj-template "1.0.1"]
                  [log4j/log4j "1.2.17"]
+                 [prismatic/schema "0.4.4"]
                  [clj-time "0.10.0"]]
   :bower-dependencies [[bootstrap "3.3.5"]
                        [jquery-timeago "1.4.1"]]
