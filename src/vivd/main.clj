@@ -6,7 +6,7 @@
              [container :as container]
              services
              index]
-            [ring.adapter.jetty-async :as ring-jetty]
+            [immutant.web :as web]
             [ring.middleware.reload :as reload]
             [clojure.tools.logging :as log]
             [clojure.edn :as edn]
@@ -20,23 +20,25 @@
    :max-containers-up 4,
    :title             "Containers",
    :default-url       "/",
-   :docker-http-port  80})
-
-(defn- default-jetty-config []
-  {:port 8080
-   :max-threads 100})
+   :docker-http-port  80
+   :http-port         8080
+   :http-host         "0.0.0.0"})
 
 (defn- read-config []
   (with-open [cfg (reader-for-file "data/config.clj")]
     (edn/read cfg)))
 
+(defn- make-web-config [{:keys [http-port http-host]}]
+  {:host http-host
+   :port http-port})
+
 (defn -main [& args]
   (let [config       (read-config)
         config       (merge (default-config) config)
-        jetty-config (or (:jetty-config config) {})
-        jetty-config (merge (default-jetty-config) jetty-config)
-        _            (log/debug "Config:" config jetty-config)
+        web-config   (make-web-config config)
+        _            (log/debug "Config:" config web-config)
         services     (vivd.services/make config)]
-    (ring-jetty/run-jetty-async (-> (vivd.http-handler/make config services)
-                                    reload/wrap-reload)
-                                jetty-config)))
+    (web/run
+      (-> (vivd.http-handler/make config services)
+          reload/wrap-reload)
+      web-config)))
