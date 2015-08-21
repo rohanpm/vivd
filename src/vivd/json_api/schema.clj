@@ -37,11 +37,16 @@
    (required-key :id)         Str
    (optional-key :attributes) Attributes})
 
+(defschema Links
+  ; TODO link with meta
+  {Keyword (maybe Str)})
+
 (defschema Document
   ; HACKED ; not complete
   {(optional-key :data)       (either
                                Resource
-                               [Resource])})
+                               [Resource])
+   (optional-key :links)      Links})
 
 (defschema MaybeDocument
   (maybe Document))

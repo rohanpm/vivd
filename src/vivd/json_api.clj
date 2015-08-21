@@ -2,6 +2,7 @@
   (:require [clojure.tools.logging :as log]
             [clojure.data.json :as json]
             [clojure.string :as str]
+            ring.middleware.params
             [schema.core :as s]
             vivd.json-api.schema))
 
@@ -65,6 +66,10 @@
          :body   (pr-str bad-parts)}
         response))))
 
+(defn- wrap-query-params [handler]
+  (fn [request]
+    (let [new-request (ring.middleware.params/assoc-query-params request "UTF-8")]
+      (handler new-request))))
 
 (defn wrap-json-api
   ([handler]
@@ -72,8 +77,9 @@
   
   ([handler options]
      (-> handler
-         (wrap-request-content-type)
-         (wrap-request-accept)
          (wrap-validate-response-body)
          (wrap-encode-response-body)
-         (wrap-response-content-type))))
+         (wrap-response-content-type)
+         (wrap-request-content-type)
+         (wrap-request-accept)
+         (wrap-query-params))))
