@@ -57,13 +57,21 @@
 (defn- wrap-encode-response-body [handler]
   (wrap-modify-body handler encode-body))
 
+(defn- internal-invalid-response [bad-parts]
+  {:status 500,
+   :body   {:errors [{:title  "invalid response generated",
+                      :status "500",
+                      :detail (str
+                               "The server internally generated an invalid "
+                               "JSON API response. This may be a bug in vivd."),
+                      :meta   {:validation-errors (prn-str bad-parts)}}]}})
+
 (defn- wrap-validate-response-body [handler]
   (fn [request]
     (let [{:keys [body] :as response} (handler request)
           bad-parts                   (s/check vivd.json-api.schema/MaybeDocument body)]
       (if bad-parts
-        {:status 500,
-         :body   (pr-str bad-parts)}
+        (internal-invalid-response bad-parts)
         response))))
 
 (defn- wrap-query-params [handler]
