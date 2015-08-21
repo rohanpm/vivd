@@ -39,7 +39,9 @@
 
 (defschema Document
   ; HACKED ; not complete
-  {(optional-key :data)       Resource})
+  {(optional-key :data)       (either
+                               Resource
+                               [Resource])})
 
 (defschema MaybeDocument
   (maybe Document))
