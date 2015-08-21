@@ -15,7 +15,7 @@
 
 (defn- request-accept-ok? [{:keys [headers] :or {headers {}}}]
   (let [accept (headers "accept")]
-    (if (not accept)
+    (if (or (not accept) (= accept "*/*"))
       true
       (let [types (str/split accept #"\s*,\s*")]
         (some #(= % json-api-content-type) types)))))
