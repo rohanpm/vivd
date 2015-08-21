@@ -7,15 +7,9 @@
 
 (def json-api-content-type "application/vnd.api+json")
 
-; FIXME: this seems dodgy.
-(defn- body-empty? [^java.io.InputStream body]
-  (if (not body)
-    true
-    (= 0 (.available body))))
-
 (defn- request-content-type-ok? [{:keys [headers body] :or {headers {}}}]
   (let [content-type (headers "content-type")]
-    (or (and (not content-type) (body-empty? body))
+    (or (not content-type)
         (= content-type json-api-content-type))))
 
 (defn- request-accept-ok? [{:keys [headers] :or {headers {}}}]
@@ -63,7 +57,6 @@
   (wrap-modify-body handler encode-body))
 
 (defn- wrap-validate-response-body [handler]
-;  (wrap-modify-body handler (partial s/validate vivd.json-api.schema/Document))
   (fn [request]
     (let [{:keys [body] :as response} (handler request)
           bad-parts                   (s/check vivd.json-api.schema/MaybeDocument body)]

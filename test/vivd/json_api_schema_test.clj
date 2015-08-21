@@ -18,7 +18,7 @@
     => '(not (map? []))
 
     (check {:data {:id "x"}})
-    => '{:data {:type missing-required-key}}
+    => truthy
     
     (check {:data {:id "xyz", :type "quux", :attributes {:id "oops"}}})
     => truthy

@@ -28,10 +28,13 @@
     (simple-handler {})
     => (contains {:status 200}))
 
-  (fact "refuses body with wrong content-type"
+  (fact "accepts no content-type and json body"
+    ; by my reading of JSON API, it is not a MUST for servers to reject
+    ; a request with no Content-Type.
     (simple-handler {:body (str-stream "{}")})
-    => (contains {:status 415})
+    => (contains {:status 200}))
 
+  (fact "refuses body with wrong content-type"
     (simple-handler {:headers {"content-type" "quux"}, :body "{}"})
     => (contains {:status 415}))
 
