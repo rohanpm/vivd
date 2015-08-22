@@ -72,7 +72,9 @@
     (let [{:keys [body] :as response} (handler request)
           bad-parts                   (s/check vivd.json-api.schema/MaybeDocument body)]
       (if bad-parts
-        (internal-invalid-response bad-parts)
+        (do
+          (log/error "Internally generated response fails validation:" body)
+          (internal-invalid-response bad-parts))
         response))))
 
 (defn- wrap-query-params [handler]

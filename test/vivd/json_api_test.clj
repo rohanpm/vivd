@@ -31,7 +31,7 @@
   (fact "accepts no content-type and json body"
     ; by my reading of JSON API, it is not a MUST for servers to reject
     ; a request with no Content-Type.
-    (simple-handler {:body (str-stream "{}")})
+    (simple-handler {:body (str-stream "{\"data\":[]}")})
     => (contains {:status 200}))
 
   (fact "refuses body with wrong content-type"
