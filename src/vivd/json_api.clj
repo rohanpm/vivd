@@ -3,6 +3,7 @@
             [clojure.data.json :as json]
             [clojure.string :as str]
             ring.middleware.params
+            [clojure.java.io :as io]
             [schema.core :as s]
             vivd.json-api.schema))
 
@@ -79,15 +80,61 @@
     (let [new-request (ring.middleware.params/assoc-query-params request "UTF-8")]
       (handler new-request))))
 
+(defn- json-read-stream [stream]
+  (with-open [rdr (io/reader stream)]
+    (json/read rdr :key-fn keyword :eof-error? false)))
+
+(defn- try-read-json [{:keys [body] :as request}]
+  (try
+    {:body (json-read-stream body)}
+    (catch Exception e
+      {:error e})))
+
+(defn- invalid-request-error [validation-errors]
+  {:title  "invalid request",
+   :status "400",
+   :detail "The provided request body is not a valid JSON API document.",
+   :meta   {:validation-errors validation-errors}})
+
+(defn- invalid-request-response [validation-errors]
+  {:status 400,
+   :body   {:errors [(invalid-request-error validation-errors)]}})
+
+(defn- wrap-decode-request-body [handler]
+  (fn [{:keys [body] :as request}]
+    (if body
+      (let [{:keys [body error]} (try-read-json request)]
+        (if error
+          (invalid-request-response (.getMessage error))
+          (handler (merge request {:body body}))))
+      (handler request))))
+
+(defn- wrap-validate-request-body [handler]
+  (fn [{:keys [body] :as request}]
+    (let [bad-parts (s/check vivd.json-api.schema/MaybeDocument body)]
+      (if bad-parts
+        (invalid-request-response (prn-str bad-parts))
+        (handler request)))))
+
+(defn- wrap-response-body [handler]
+  (-> handler
+      (wrap-validate-response-body)
+      (wrap-encode-response-body)))
+
+(defn- wrap-request-body [handler]
+  (-> handler
+      (wrap-validate-request-body)
+      (wrap-decode-request-body)))
+
 (defn wrap-json-api
   ([handler]
      (wrap-json-api handler {}))
   
   ([handler options]
      (-> handler
-         (wrap-validate-response-body)
-         (wrap-encode-response-body)
-         (wrap-response-content-type)
+         (wrap-request-body)
          (wrap-request-content-type)
-         (wrap-request-accept)
+         (wrap-request-accept)         
+         (wrap-response-body)
+         (wrap-response-content-type)
          (wrap-query-params))))

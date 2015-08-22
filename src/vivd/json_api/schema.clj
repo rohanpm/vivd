@@ -22,30 +22,48 @@
 (defn- not-id-or-type? [kw]
   (not (#{:id :type} kw)))
 
-(defschema AttributeKeyword
+(defschema MemberName
   (both
    Keyword
-   (pred not-id-or-type?)
    (pred valid-member-name?)))
+
+(defschema AttributeKeyword
+  (both
+   MemberName
+   (pred not-id-or-type?)))
 
 (defschema Attributes
   ; NOT VALIDATED: member naming, etc.
   {AttributeKeyword Any})
 
+(defschema Meta
+  {MemberName Any})
+
 (defschema Resource
   {(required-key :type)       Str
-   (required-key :id)         Str
+   ; FIXME: id should be optional on the way in,
+   ; required on the way out.
+   (optional-key :id)         Str
    (optional-key :attributes) Attributes})
 
 (defschema Links
   ; TODO link with meta
   {Keyword (maybe Str)})
 
+(defschema ApiError
+  {(optional-key :id)     Str
+   (optional-key :status) Str
+   (optional-key :code)   Str
+   (optional-key :title)  Str
+   (optional-key :detail) Str
+   (optional-key :meta)   Meta})
+
 (defschema Document
   ; HACKED ; not complete
   {(optional-key :data)       (either
                                Resource
                                [Resource])
+   (optional-key :errors)     [ApiError]
    (optional-key :links)      Links})
 
 (defschema MaybeDocument

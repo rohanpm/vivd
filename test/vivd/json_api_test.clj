@@ -35,11 +35,11 @@
     => (contains {:status 200}))
 
   (fact "refuses body with wrong content-type"
-    (simple-handler {:headers {"content-type" "quux"}, :body "{}"})
+    (simple-handler {:headers {"content-type" "quux"}, :body (str-stream "{}")})
     => (contains {:status 415}))
 
   (fact "accepts body with correct content-type"
-    (simple-handler {:headers {"content-type" json-api-content-type}, :body "{}"})
+    (simple-handler {:headers {"content-type" json-api-content-type}, :body (str-stream "{\"data\":[]}")})
     => (contains {:status 200})))
 
 (facts "response content type"
