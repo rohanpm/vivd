@@ -12,9 +12,15 @@
   (-> simple-handler*
       (wrap-json-api)))
 
+(defn throw-or-return [val]
+  (fn [request]
+    (if (instance? Throwable val)
+      (throw val)
+      val)))
+
 (defn wrap-handler [response]
   (-> response
-      (constantly)
+      (throw-or-return)
       (wrap-json-api)))
 
 (defn test-handler
@@ -89,3 +95,15 @@
     ; cannot have id/type within attributes
     (test-handler {:status 200, :body {:data {:id "foo", :type "x", :attributes {:type "bar"}}}})
     => (contains {:status 500})))
+
+(facts "exceptions"
+  (fact "generic exceptions translate to 500"
+    (test-handler (NullPointerException.))
+    => (contains {:status 500,
+                  :body   #"An internal server error has"}))
+
+  (fact "errors can be passed via ex-info"
+    (test-handler (ex-info "test" {:json-api-error {:status "444",
+                                                    :title  "foo bar"}}))
+    => (contains {:status 444,
+                  :body   #"foo bar"})))

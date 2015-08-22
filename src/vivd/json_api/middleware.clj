@@ -138,6 +138,37 @@
       (wrap-validate-request-body)
       (wrap-decode-request-body)))
 
+(defn- ex-api-error [ex]
+  (if-let [data (ex-data ex)]
+    (:json-api-error data)))
+
+(defn- try-str-to-int [s]
+  (try
+    (Integer/valueOf s)
+    (catch Exception _
+      nil)))
+
+(defn- response-for-exception [ex]
+  (let [error-object (or
+                      (ex-api-error ex)
+                      {:status "500"
+                       :title  "internal error"
+                       :detail "An internal server error has occurred."})
+        status       (:status error-object)
+        status       (or (try-str-to-int status) 500)]
+    (if (= status 500)
+      (log/error "An unexpected exception occurred:" ex))
+    {:status status
+     :body   {:errors [error-object]}}))
+
+(defn- wrap-exceptions [handler]
+  (fn [request]
+    (try
+      (handler request)
+      (catch Exception e
+        (log/debug "Exception" e)
+        (response-for-exception e)))))
+
 (defn wrap-json-api
   ([handler]
      (wrap-json-api handler {}))
@@ -146,7 +177,8 @@
      (-> handler
          (wrap-request-body)
          (wrap-request-content-type)
-         (wrap-request-accept)         
+         (wrap-request-accept)
+         (wrap-exceptions)
          (wrap-response-body)
          (wrap-response-content-type)
          (wrap-query-params))))
