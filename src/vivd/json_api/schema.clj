@@ -58,13 +58,25 @@
    (optional-key :detail) Str
    (optional-key :meta)   Meta})
 
-(defschema Document
+(defschema Document*
   ; HACKED ; not complete
   {(optional-key :data)       (either
                                Resource
                                [Resource])
    (optional-key :errors)     [ApiError]
    (optional-key :links)      Links})
+
+(defn- not-data-and-errors [hash]
+  (try
+    (let [keys (set (keys hash))]
+      (not (and (:data keys) (:errors keys))))
+    (catch Exception e
+      true)))
+
+(defschema Document
+  (both
+   Document
+   (pred not-data-and-errors)))
 
 (defschema MaybeDocument
   (maybe Document))

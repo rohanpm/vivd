@@ -4,13 +4,13 @@
             [schema.core :as s]))
 
 (defn check [val]
-  (let [str (->> val
-                 (s/check MaybeDocument)
-                 (pr-str))]
-    (or (try
-          (read-string str)
-          (catch Exception _))
-        str)))
+  (let [checked     (s/check MaybeDocument val)
+        checked-str (pr-str checked)]
+    (if checked
+      (or (try
+            (read-string checked-str)
+            (catch Exception _))
+          checked-str))))
 
 (facts "validation"
   (fact "fails when expected"
@@ -24,4 +24,8 @@
     => truthy
 
     (check {:data {:id "xyz", :type "quux", :attributes {:_bad "oops"}}})
+    => truthy
+
+    ; cannot contain both data and errors
+    (check {:data [] :errors []})
     => truthy))
