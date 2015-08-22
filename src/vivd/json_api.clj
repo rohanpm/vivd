@@ -45,7 +45,6 @@
         (merge response {:headers (merge headers {"content-type" json-api-content-type})})))))
 
 (defn- encode-body [data]
-  ; TODO: validate!
   (json/write-str data))
 
 (defn- wrap-modify-body [handler modify-body]
@@ -118,8 +117,19 @@
         (invalid-request-response (prn-str bad-parts))
         (handler request)))))
 
+(defn- empty-to-nil [val]
+  (if (= val "")
+    nil
+    val))
+
+(defn- wrap-default-response-body [handler]
+  (fn [request]
+    (let [response (handler request)]
+      (update response :body empty-to-nil))))
+
 (defn- wrap-response-body [handler]
   (-> handler
+      (wrap-default-response-body)
       (wrap-validate-response-body)
       (wrap-encode-response-body)))
 
