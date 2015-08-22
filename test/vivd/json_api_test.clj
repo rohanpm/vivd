@@ -1,5 +1,5 @@
 (ns vivd.json-api-test
-  (:require [vivd.json-api :refer [wrap-json-api]]
+  (:require [vivd.json-api.middleware :refer [wrap-json-api]]
             [vivd.api-test :refer [str-stream]]
             [midje.sweet :refer :all]))
 

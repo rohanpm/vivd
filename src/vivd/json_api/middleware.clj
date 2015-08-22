@@ -1,4 +1,4 @@
-(ns vivd.json-api
+(ns vivd.json-api.middleware
   (:require [clojure.tools.logging :as log]
             [clojure.data.json :as json]
             [clojure.string :as str]
