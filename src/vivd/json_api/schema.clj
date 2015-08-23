@@ -39,9 +39,14 @@
 (defschema Meta
   {MemberName Any})
 
+(defschema LinkValue
+  (either
+   Str
+   {(required-key :href) Str
+    (optional-key :meta) Meta}))
+
 (defschema Links
-  ; TODO link with meta
-  {Keyword (maybe Str)})
+  {Keyword (maybe LinkValue)})
 
 (defschema Resource
   {(required-key :type)       Str

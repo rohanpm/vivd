@@ -36,6 +36,8 @@
     (check {:data []})
     => nil
 
+    (check {:data [] :links {:self "quux"}})
+
     (check {:errors [{:title "oops"}]})
     => nil
 

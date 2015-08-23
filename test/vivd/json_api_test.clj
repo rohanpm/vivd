@@ -6,13 +6,6 @@
 
 (def json-api-content-type "application/vnd.api+json")
 
-(defn simple-handler* [request]
-  {:status 200})
-
-(def simple-handler
-  (-> simple-handler*
-      (wrap-json-api)))
-
 (defn throw-or-return [val]
   (fn [request]
     (if (instance? Throwable val)
@@ -33,26 +26,30 @@
      (test-handler response {}))
   ([response request]
      (let [handler (wrap-handler response)
+           request (merge  {:scheme      :http
+                            :server-port 80
+                            :server-name "vivd.example.com"}
+                           request)
            out     (handler request)]
        (update out :body maybe-json-read-str))))
 
 (facts "request content type"
   (fact "accepts no content-type and no body"
-    (simple-handler {})
+    (test-handler {:status 200} {})
     => (contains {:status 200}))
 
   (fact "accepts no content-type and json body"
     ; by my reading of JSON API, it is not a MUST for servers to reject
     ; a request with no Content-Type.
-    (simple-handler {:body (str-stream "{\"data\":[]}")})
+    (test-handler {:status 200} {:body (str-stream "{\"data\":[]}")})
     => (contains {:status 200}))
 
   (fact "refuses body with wrong content-type"
-    (simple-handler {:headers {"content-type" "quux"}, :body (str-stream "{}")})
+    (test-handler {:status 200} {:headers {"content-type" "quux"}, :body (str-stream "{}")})
     => (contains {:status 415}))
 
   (fact "accepts body with correct content-type"
-    (simple-handler {:headers {"content-type" json-api-content-type}, :body (str-stream "{\"data\":[]}")})
+    (test-handler {:status 200} {:headers {"content-type" json-api-content-type}, :body (str-stream "{\"data\":[]}")})
     => (contains {:status 200})))
 
 (facts "response content type"
@@ -116,3 +113,35 @@
                                                     :title  "foo bar"}}))
     => (contains {:status 444,
                   :body   {:errors [{:title "foo bar", :status "444"}]}})))
+
+(facts "links"
+  (fact "are made absolute in body"
+    (test-handler {:body {:data {:id    "abc"
+                                 :type  "abc"
+                                 :links {:self "/foo/bar"}}}})
+    => (contains {:body
+                  (contains {:data
+                             (contains {:links
+                                        {:self
+                                         "http://vivd.example.com:80/foo/bar"}})})})
+
+    (test-handler {:body {:data [{:id    "abc"
+                                   :type  "abc"
+                                   :links {:self "/foo/bar"}}]}})
+    => (contains {:body
+                  (contains {:data (just
+                                    [(contains {:links
+                                                {:self
+                                                 "http://vivd.example.com:80/foo/bar"}})])})})
+
+    (test-handler {:body {:data  []
+                          :links {:foo {:href "/foo/bar"}}}})
+    => (contains {:body
+                  (contains {:links
+                             {:foo
+                              {:href 
+                               "http://vivd.example.com:80/foo/bar"}}})}))
+
+  (fact "is made absolute in Location"
+    (test-handler {:body {:data []} :headers {"location" "/foo/bar"}})
+    => (contains {:headers (contains {"location" "http://vivd.example.com:80/foo/bar"})})))

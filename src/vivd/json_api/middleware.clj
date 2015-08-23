@@ -169,6 +169,52 @@
         (log/debug "Exception" e)
         (response-for-exception e)))))
 
+(defn- link-prefix [{:keys [headers scheme server-port server-name]}]
+  (let [host (or (and headers (headers "host"))
+                 (str server-name ":" server-port))]
+    (str (name scheme) "://" host)))
+
+(defn- prefix-link-val [prefix val]
+  (log/debug "prefix-link-val" prefix val)
+  (cond
+   (nil? val)    nil
+   (string? val) (str prefix val)
+   :else         (merge val {:href 
+                             (prefix-link-val prefix (:href val))})))
+
+(defn- prefix-link-object [prefix object]
+  (log/debug "prefix" prefix object)
+  (let [prefixed-kvs (mapcat #(vector
+                               (first %)
+                               (prefix-link-val prefix (second %))) object)]
+    (apply hash-map prefixed-kvs)))
+
+(defn- update-in-if-exists [object ks f]
+  (if (get-in object ks)
+    (update-in object ks f)
+    object))
+
+(defn- update-in-each [object ks f]
+  (let [val (get-in object ks)]
+    (if (sequential? val)
+      (update-in object ks #(map f %))
+      object)))
+
+(defn- prefix-links [prefix response]
+  (let [prefixer (partial prefix-link-object prefix)]
+    (-> response
+        (update-in-if-exists [:headers "location"] (partial prefix-link-val prefix))
+        (update-in-each [:body :data] (fn [resource]
+                                        (update-in-if-exists resource [:links] prefixer)))
+        (update-in-if-exists [:body :data :links] prefixer)
+        (update-in-if-exists [:body :links] prefixer))))
+
+(defn- wrap-absolute-links [handler]
+  (fn [request]
+    (let [response (handler request)
+          prefix   (link-prefix request)]
+      (prefix-links prefix response))))
+
 (defn wrap-json-api
   ([handler]
      (wrap-json-api handler {}))
@@ -179,6 +225,7 @@
          (wrap-request-content-type)
          (wrap-request-accept)
          (wrap-exceptions)
+         (wrap-absolute-links)
          (wrap-response-body)
          (wrap-response-content-type)
          (wrap-query-params))))
