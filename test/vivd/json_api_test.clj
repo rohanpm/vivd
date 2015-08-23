@@ -1,6 +1,7 @@
 (ns vivd.json-api-test
   (:require [vivd.json-api.middleware :refer [wrap-json-api]]
             [vivd.api-test :refer [str-stream]]
+            [clojure.data.json :as json]
             [midje.sweet :refer :all]))
 
 (def json-api-content-type "application/vnd.api+json")
@@ -23,11 +24,17 @@
       (throw-or-return)
       (wrap-json-api)))
 
+(defn- maybe-json-read-str [val]
+  (if val
+    (json/read-str val :key-fn keyword)))
+
 (defn test-handler
   ([response]
      (test-handler response {}))
   ([response request]
-     ((wrap-handler response) request)))
+     (let [handler (wrap-handler response)
+           out     (handler request)]
+       (update out :body maybe-json-read-str))))
 
 (facts "request content type"
   (fact "accepts no content-type and no body"
@@ -86,7 +93,7 @@
   (fact "is serialized as JSON"
     (test-handler {:status 200, :body {:data {:id "foo", :type "x"}}})
     => (contains {:status 200,
-                  :body   "{\"data\":{\"id\":\"foo\",\"type\":\"x\"}}"}))
+                  :body   {:data {:id "foo", :type "x"}}}))
 
   (fact "refuses incorrect body"
     (test-handler {:status 200, :body {:foo :bar}})
@@ -99,11 +106,13 @@
 (facts "exceptions"
   (fact "generic exceptions translate to 500"
     (test-handler (NullPointerException.))
-    => (contains {:status 500,
-                  :body   #"An internal server error has"}))
+    => (contains  {:body {:errors [{:detail "An internal server error has occurred.",
+                                    :status "500",
+                                    :title "internal error"}]},
+                   :status 500}))
 
   (fact "errors can be passed via ex-info"
     (test-handler (ex-info "test" {:json-api-error {:status "444",
                                                     :title  "foo bar"}}))
     => (contains {:status 444,
-                  :body   #"foo bar"})))
+                  :body   {:errors [{:title "foo bar", :status "444"}]}})))
