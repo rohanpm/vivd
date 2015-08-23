@@ -96,7 +96,7 @@
   (let [{:keys [attributes]}           (extract-resource body ContainerResourceIn)
         {:keys [git-ref git-revision]} attributes
         unique-git-revision            (params "unique-git-revision")]
-    (log/info params attributes)
+    (log/debug "create" params attributes)
     (if-let [{:keys [id]} (and (truthy? unique-git-revision)
                                (lookup-by-git-revision services git-revision))]
       {:status  303,
