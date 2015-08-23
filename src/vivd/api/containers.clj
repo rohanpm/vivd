@@ -1,8 +1,10 @@
 (ns vivd.api.containers
-  (:require [vivd.json-api :refer [wrap-json-api]]
+  (:require [vivd.api.schema :refer [ContainerResourceIn]]
+            [vivd.json-api.middleware :refer [wrap-json-api]]
+            [vivd.json-api.utils :refer [extract-resource]]
             [vivd.index :as index]
             [clojure.tools.logging :as log]
-            [compojure.core :refer [GET routing wrap-routes]]))
+            [compojure.core :refer [GET POST routing wrap-routes]]))
 
 ; TODO link (at least to self)
 (defn- container-resource [{:keys [id] :as container}]
@@ -62,6 +64,11 @@
               {:data (map container-resource vals)}
               request)}))
 
+(defn- create-container [services {:keys [body] :as request}]
+  (let [to-create (extract-resource body ContainerResourceIn)]
+    (log/info "to create:" to-create))
+  {:status 404})
+
 (defn make [services]
   (wrap-routes
    (fn [request]
@@ -69,5 +76,7 @@
       (GET "/a/containers/:id" [id :as r]
            (get-container services r id))
       (GET "/a/containers" [:as r]
-           (get-containers services r))))
+           (get-containers services r))
+      (POST "/a/containers" [:as r]
+            (create-container services r))))
    wrap-json-api))
