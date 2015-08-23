@@ -5,10 +5,10 @@
 
 (def sample-containers-response
   {:data [{:id "Q8pLcQMn"
-           :type "container"
+           :type "containers"
            :attributes {:status :new}},
           {:id "tKdQ3AGf"
-           :type "container"
+           :type "containers"
            :attributes {:status :new}}],
    :links {:first "/a/containers?page[offset]=0&page[limit]=200"
            :next nil
@@ -46,6 +46,12 @@
     => nil
 
     (check sample-containers-response)
+    => nil
+
+    (check {:data {:id         "Q8pLcQMn"
+                   :type       "containers"
+                   :attributes {:status :up}
+                   :links      {:self "/a/containers/Q8pLcQMn"}}})
     => nil)
 
   (fact "fails when expected"

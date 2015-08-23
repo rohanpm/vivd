@@ -39,16 +39,17 @@
 (defschema Meta
   {MemberName Any})
 
+(defschema Links
+  ; TODO link with meta
+  {Keyword (maybe Str)})
+
 (defschema Resource
   {(required-key :type)       Str
    ; FIXME: id should be optional on the way in,
    ; required on the way out.
    (optional-key :id)         Str
-   (optional-key :attributes) Attributes})
-
-(defschema Links
-  ; TODO link with meta
-  {Keyword (maybe Str)})
+   (optional-key :attributes) Attributes
+   (optional-key :links)      Links})
 
 (defschema ApiError
   {(optional-key :id)     Str

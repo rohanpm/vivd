@@ -37,7 +37,8 @@
         config       (merge (default-config) config)
         web-config   (make-web-config config)
         _            (log/debug "Config:" config web-config)
-        services     (vivd.services/make config)]
+        services     (vivd.services/make config)
+        services     (merge services {:config config})]
     (web/run
       (-> (vivd.http-handler/make config services)
           reload/wrap-reload)

@@ -4,13 +4,21 @@
             [vivd.json-api.utils :refer [extract-resource]]
             [vivd.index :as index]
             [clojure.tools.logging :as log]
+            clj-time.core
             [compojure.core :refer [GET POST routing wrap-routes]]))
 
-; TODO link (at least to self)
+(def CHARS "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")
+(defn- generate-id []
+  (apply str (map (fn [_] (rand-nth CHARS)) (range 8))))
+
+(defn- links-for-container [{:keys [id] :as container}]
+  {:self (str "/a/containers/" id)})
+
 (defn- container-resource [{:keys [id] :as container}]
   {:id         id
-   :type       "container"
-   :attributes (select-keys container [:status])})
+   :type       "containers"
+   :attributes (select-keys container [:status])
+   :links      (links-for-container container)})
 
 (defn- get-container [{:keys [index]} request id]
   (if-let [val (index/get index id)]
@@ -64,10 +72,39 @@
               {:data (map container-resource vals)}
               request)}))
 
-(defn- create-container [services {:keys [body] :as request}]
-  (let [to-create (extract-resource body ContainerResourceIn)]
-    (log/info "to create:" to-create))
-  {:status 404})
+(defn- truthy? [x]
+  (#{"1" 1 "true" true "yes"} x))
+
+(defn- lookup-by-git-revision [{:keys [index]} git-revision]
+  (->> index
+       (index/vals)
+       (filter #(= git-revision (:git-revision %)))
+       (first)))
+
+(defn- force-create-container [{:keys [index]} data]
+  (let [id (generate-id)
+        c  (merge data {:id        id
+                        :status    :new
+                        :timestamp (clj-time.core/now)})]
+    (index/update index c)
+    (log/info "Created:" data "id:" id)
+    c))
+
+(defn- create-container [services {:keys [body params] :as request}]
+  (let [{:keys [attributes]}           (extract-resource body ContainerResourceIn)
+        {:keys [git-ref git-revision]} attributes
+        unique-git-revision            (params "unique-git-revision")]
+    (log/info params attributes)
+    (if-let [{:keys [id]} (and (truthy? unique-git-revision)
+                               (lookup-by-git-revision services git-revision))]
+      {:status  303,
+       :headers {"location" (str "/a/containers/" id)}}
+      (let [{:keys [id] :as created} (force-create-container
+                                      services
+                                      {:git-ref git-ref :git-revision git-revision})]
+        {:status  201
+         :body    {:data (container-resource created)}
+         :headers {"location" (str "/a/containers/" id)}}))))
 
 (defn make [services]
   (wrap-routes
