@@ -11,19 +11,21 @@
 (defn- generate-id []
   (apply str (map (fn [_] (rand-nth CHARS)) (range 8))))
 
-(defn- links-for-container [{:keys [id] :as container}]
-  {:self (str "/a/containers/" id)})
+(defn- links-for-container [{:keys [config]} {:keys [id] :as container}]
+  (let [{:keys [default-url]} config]
+    {:self (str "/a/containers/" id)
+     :app  (str "/" id default-url)}))
 
-(defn- container-resource [{:keys [id] :as container}]
+(defn- container-resource [services {:keys [id] :as container}]
   {:id         id
    :type       "containers"
    :attributes (select-keys container [:status])
-   :links      (links-for-container container)})
+   :links      (links-for-container services container)})
 
-(defn- get-container [{:keys [index]} request id]
+(defn- get-container [{:keys [index] :as services} request id]
   (if-let [val (index/get index id)]
     {:status    200
-     :body {:data (container-resource val)}}
+     :body {:data (container-resource services val)}}
     ; TODO need "errors" object?
     {:status 404}))
 
@@ -65,11 +67,11 @@
              :next  next-link,
              :prev  prev-link}}))
 
-(defn- get-containers [{:keys [index]} request]
+(defn- get-containers [{:keys [index] :as services} request]
   (let [vals (index/vals index)]
     {:status 200,
      :body   (paginate
-              {:data (map container-resource vals)}
+              {:data (map (partial container-resource services) vals)}
               request)}))
 
 (defn- truthy? [x]
@@ -103,7 +105,7 @@
                                       services
                                       {:git-ref git-ref :git-revision git-revision})]
         {:status  201
-         :body    {:data (container-resource created)}
+         :body    {:data (container-resource services created)}
          :headers {"location" (str "/a/containers/" id)}}))))
 
 (defn make [services]
