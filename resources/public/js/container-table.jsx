@@ -1,4 +1,5 @@
-import React from 'react';
+import React   from 'react';
+import TimeAgo from 'react-timeago';
 
 export default React.createClass({
   rowForContainer: function(c) {
@@ -6,7 +7,7 @@ export default React.createClass({
       <tr key={c.id}>
         <td><a href={c.links.app}>{c.id}</a></td>
         <td>{c.attributes['git-ref']}</td>
-        <td>{c.attributes.timestamp}</td>
+        <td><TimeAgo date={c.attributes.timestamp} title={c.attributes.timestamp}/></td>
         <td>{c.attributes.status}</td>
       </tr>
     );
