@@ -13,12 +13,20 @@
                  [log4j/log4j "1.2.17"]
                  [prismatic/schema "0.4.4"]
                  [clj-time "0.10.0"]]
-  :bower-dependencies [[bootstrap "3.3.5"]
-                       [jquery-timeago "1.4.1"]]
+  :bower-dependencies [[bootstrap "3.3.5"]]
   :bower {:directory "bower_components"
-          :flat-files ["jquery-timeago/jquery.timeago.js"]}
+          :copy-dist ["bootstrap"]}
+  :node-dependencies [[babelify "6.2.0"]
+                      [browserify "11.0.1"]
+                      [watchify "3.3.1"]
+                      [barracks "6.0.4"]
+                      [react "0.13.3"]
+                      [timeago "1.4.1"]
+                      [jquery "2.1.4"]
+                      [uglify "0.1.5"]]
   :hooks [leiningen.vivd/add-hooks]
   :profiles {:dev {:plugins      [[lein-midje "3.1.3"]
-                                  [lein-bower "0.5.1"]]
+                                  [lein-bower "0.5.1"]
+                                  [lein-npm "0.5.1"]]
                    :dependencies [[midje "1.6.3"]]}
              :uberjar {:aot :all}})

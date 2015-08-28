@@ -1,5 +1,8 @@
 .nrepl-port
+.lein-failures
 *~
 target/
 bower_components/
+node_modules/
 resources/public/vendor/
+resources/public/js/app-bundle.js
