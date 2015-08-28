@@ -5,6 +5,7 @@
             [vivd.index :as index]
             [clojure.tools.logging :as log]
             clj-time.core
+            clj-time.format
             [compojure.core :refer [GET POST routing wrap-routes]]))
 
 (def CHARS "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")
@@ -16,10 +17,21 @@
     {:self (str "/a/containers/" id)
      :app  (str "/" id default-url)}))
 
+(def iso8601-formatter
+  (clj-time.format/formatters :date-time))
+
+(defn- iso8601 [timestamp]
+  (clj-time.format/unparse iso8601-formatter timestamp))
+
+(defn- container-resource-attributes [{:keys [timestamp] :as container}]
+  (merge
+   (select-keys container [:status :git-ref :git-revision :git-oneline])
+   {:timestamp (iso8601 timestamp)}))
+
 (defn- container-resource [services {:keys [id] :as container}]
   {:id         id
    :type       "containers"
-   :attributes (select-keys container [:status])
+   :attributes (container-resource-attributes container)
    :links      (links-for-container services container)})
 
 (defn- get-container [{:keys [index] :as services} request id]
