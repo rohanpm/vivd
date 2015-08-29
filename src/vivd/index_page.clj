@@ -29,7 +29,9 @@
          (stylesheets)))
 
 (defn- state [{:keys [config index] :as services}]
-  (let [req            {:params {}
+  (let [{:keys [per-page]}
+                       config
+        req            {:params {"page[limit]" per-page}
                         :uri    "/a/containers"}
         {:keys [body]} (containers/get-containers services req)]
     {:title      (:title config)
