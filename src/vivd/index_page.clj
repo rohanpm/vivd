@@ -2,7 +2,10 @@
   (:refer-clojure :rename {map clj-map meta clj-meta time clj-time})
   (:require [clj-template.html5 :refer :all]
             [vivd
-             [index :as index]]))
+             [index :as index]]
+            [vivd.react.renderer :as renderer]
+            [vivd.api.containers :as containers]
+            [clojure.tools.logging :as log]))
 
 (set! *warn-on-reflection* true)
 
@@ -24,7 +27,19 @@
          (meta {:charset "utf-8"})
          (stylesheets)))
 
-(defn from-index [{:keys [title] :as config} index]
+(defn- state [{:keys [config index] :as services}]
+  (let [req            {:params {}
+                        :uri    "/a/containers"}
+        {:keys [body]} (containers/get-containers services req)]
+    {:title      (:title config)
+     :containers body}))
+
+(defn- render-for-index [{:keys [renderer] :as services}]
+  (let [st (state services)
+        _  (log/debug "state for render:" st)]
+    (renderer/render renderer st)))
+
+(defn from-index [{:keys [config index renderer] :as services}]
   (let [ordered (index/vals index)
         ordered (sort-by :timestamp ordered)
         ordered (reverse ordered)]
@@ -33,5 +48,5 @@
      (html
       (vivd-head config)
       (body
-       (p "Loading...")
+       (render-for-index services)
        (javascript "public/js/app-bundle.js"))))))

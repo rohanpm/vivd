@@ -33,6 +33,12 @@ function gitElement({'git-ref': ref, 'git-revision': rev, 'git-oneline': oneline
 }
 
 export default React.createClass({
+  getDefaultProps: function() {
+    return {
+      containers: {data: []},
+    };
+  },
+
   rowForContainer: function(c) {
     return (
       <tr key={c.id}>

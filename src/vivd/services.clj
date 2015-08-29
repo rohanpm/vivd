@@ -4,7 +4,8 @@
              [container :as container]
              reaper
              refresher
-             builder]))
+             builder]
+            [vivd.react.renderer :as renderer]))
 
 (set! *warn-on-reflection* true)
 
@@ -13,8 +14,10 @@
   (let [index          (index/make)
         reaper         (vivd.reaper/make config index)
         refresher      (vivd.refresher/make config index)
-        builder        (vivd.builder/make config index)]
+        builder        (vivd.builder/make config index)
+        renderer       (renderer/make)]
     {:index     index
      :reaper    reaper
      :refresher refresher
-     :builder   builder}))
+     :builder   builder
+     :renderer  renderer}))

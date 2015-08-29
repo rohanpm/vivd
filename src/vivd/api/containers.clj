@@ -79,7 +79,7 @@
              :next  next-link,
              :prev  prev-link}}))
 
-(defn- get-containers [{:keys [index] :as services} request]
+(defn get-containers [{:keys [index] :as services} request]
   (let [vals (index/vals index)]
     {:status 200,
      :body   (paginate

@@ -14,11 +14,11 @@
 
 (set! *warn-on-reflection* true)
 
-(defn make-index-handler [config index]
+(defn make-index-handler [services]
   (->> (fn [request]
          {:status 200
           :headers {"content-type" "text/html"}
-          :body (index-page/from-index config index)})
+          :body (index-page/from-index services)})
        (ensuring-method :get)
        (if-uri-is "/")))
 
@@ -96,9 +96,11 @@
   "Returns a top-level handler for all HTTP requests"
   (let [all-handlers   [(make-redirect-handler index)
                         resource-handler
-                        (make-index-handler config index)
+                        (make-index-handler services)
                         (api/make-create-handler index)
                         (api-containers/make services)
                         (make-proxy-handler config builder index)]]
     (fn [request]
-      (first (keep #(% request) all-handlers)))))
+      (let [response (first (keep #(% request) all-handlers))
+            response (ring.util.response/charset response "utf-8")]
+        response))))
