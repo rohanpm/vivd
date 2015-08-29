@@ -4,7 +4,7 @@ import $        from 'jquery';
 import Body     from './body';
 import Dispatch from './dispatch';
 
-const App = React.createClass({
+export default React.createClass({
   getInitialState: function() {
     return this.props.initialState || {
       title: "vivd",
@@ -32,21 +32,3 @@ const App = React.createClass({
     return <Body {...this.state}/>;
   }
 });
-
-// Bootstrap if loaded in browser, using state passed by server
-if (typeof(document) !== 'undefined') {
-  React.render(
-    <App initialState={serverState}/>,
-    document.getElementsByTagName('body')[0]
-  );
-}
-
-// This is used for rendering the application, server-side.
-// Exporting it in this way because the server doesn't have a working
-// module importer.
-window.renderAppForState = function(state) {
-  const app = <App initialState={state}/>;
-  return React.renderToString(app);
-};
-
-export default App;
