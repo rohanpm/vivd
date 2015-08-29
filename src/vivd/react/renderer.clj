@@ -67,13 +67,15 @@
 
 (defn render [{:keys [^ScriptEngine engine lock]} state]
   (locking lock
-    (let [prog (str
+    (let [state (if (string? state)
+                  state
+                  (json/write-str state))
+          prog (str
                                         ; there's surely a way to more directly pass in the object,
                                         ; but I can't figure it out ...
                 "window.renderAppForState("
-                (json/write-str state)
+                state
                 ")")
-          _    (log/debug "EVAL:" prog)
           out  (.eval engine prog)]
       out)))
 
