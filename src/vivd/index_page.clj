@@ -5,7 +5,8 @@
              [index :as index]]
             [vivd.react.renderer :as renderer]
             [vivd.api.containers :as containers]
-            [clojure.tools.logging :as log]))
+            [clojure.tools.logging :as log]
+            [clojure.data.json :as json]))
 
 (set! *warn-on-reflection* true)
 
@@ -34,10 +35,16 @@
     {:title      (:title config)
      :containers body}))
 
+(defn- set-state-tag [state]
+  (script {:type "text/javascript"}
+          (str "serverState = " state ";")))
+
 (defn- render-for-index [{:keys [renderer] :as services}]
   (let [st (state services)
-        _  (log/debug "state for render:" st)]
-    (renderer/render renderer st)))
+        st (json/write-str st)]
+    (str
+     (renderer/render renderer st)
+     (set-state-tag st))))
 
 (defn from-index [{:keys [config index renderer] :as services}]
   (let [ordered (index/vals index)

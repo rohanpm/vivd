@@ -33,15 +33,13 @@ const App = React.createClass({
   }
 });
 
-// bootstrap if loaded in browser
-/*
+// Bootstrap if loaded in browser, using state passed by server
 if (document) {
   React.render(
-    <App/>,
+    <App initialState={serverState}/>,
     document.getElementsByTagName('body')[0]
   );
 }
-*/
 
 // This is used for rendering the application, server-side.
 // Exporting it in this way because the server doesn't have a working
