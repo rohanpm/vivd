@@ -34,7 +34,7 @@ const App = React.createClass({
 });
 
 // Bootstrap if loaded in browser, using state passed by server
-if (document) {
+if (typeof(document) !== 'undefined') {
   React.render(
     <App initialState={serverState}/>,
     document.getElementsByTagName('body')[0]
