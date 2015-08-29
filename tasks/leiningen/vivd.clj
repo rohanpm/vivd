@@ -59,7 +59,7 @@
 (def uglify     "node_modules/.bin/uglify")
 (def app-bundle "resources/public/js/app-bundle.js")
 
-(def browserify-args ["resources/public/js/app.jsx"
+(def browserify-args ["resources/js/app.jsx"
                       "-g" "babelify"
                       "--extension" ".jsx"
                       "--outfile" app-bundle])
