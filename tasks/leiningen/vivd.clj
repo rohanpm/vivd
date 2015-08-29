@@ -60,7 +60,7 @@
 (def app-bundle "resources/public/js/app-bundle.js")
 
 (def browserify-args ["resources/public/js/app.jsx"
-                      "-t" "babelify"
+                      "-g" "babelify"
                       "--extension" ".jsx"
                       "--outfile" app-bundle])
 
