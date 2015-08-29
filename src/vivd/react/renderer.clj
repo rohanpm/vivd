@@ -75,7 +75,6 @@
                 ")")
           _    (log/debug "EVAL:" prog)
           out  (.eval engine prog)]
-      (log/info "EVALUATED:" out)
       out)))
 
 (defn make []
