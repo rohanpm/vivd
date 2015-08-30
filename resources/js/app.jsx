@@ -1,8 +1,16 @@
 import React       from 'react';
 import QueryString from 'query-string';
 
-import Body     from './body';
-import Dispatch from './dispatch';
+import Body         from './body';
+import Dispatch     from './dispatch';
+import * as JsonApi from './json-api';
+
+function updatedQueryString(key, val) {
+  const now = QueryString.parse(location.search);
+  const updated = Object.assign({}, now);
+  updated[key] = val;
+  return '?' + QueryString.stringify(updated);
+}
 
 function searchForLink(link) {
   const meta = link.meta;
@@ -16,11 +24,8 @@ function searchForLink(link) {
   }
 
   const now = QueryString.parse(location.search);
-  const updated = {};
+  const updated = Object.assign({}, now);
   var any = false;
-  for (let key of Object.keys(now)) {
-    updated[key] = now[key];
-  }
   for (let key of Object.keys(query_params)) {
     any = true;
     updated[key] = query_params[key];
@@ -70,6 +75,36 @@ export default React.createClass({
 
     Dispatch.on('paged', (obj) => {
       this.setState({containers: obj});
+    });
+
+    Dispatch.on('replace-api-param', ({param, value}) => {
+      const search = location.search;
+      const updatedSearch = updatedQueryString(param, value);
+      if (search === updatedSearch) {
+        console.log("No change to search", search);
+        return;
+      }
+
+      const url = '/a/containers' + updatedSearch;
+      JsonApi.xhr(
+        {url: url,
+         onload: (event) => {
+           Dispatch('set-state-and-history', {state: {containers: event.target.response},
+                                              search: updatedSearch});
+         }
+        }
+      );
+    });
+
+    Dispatch.on('filter-requested', (str) => {
+      this.setState({filter: str});
+      Dispatch("replace-api-param", {param: "filter[*]",
+                                     value: str});
+    });
+
+    Dispatch.on('set-state-and-history', ({state, search}) => {
+      this.setState(state);
+      history.pushState(this.state, "", search);
     });
 
     this.addHistoryHooks();

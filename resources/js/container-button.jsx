@@ -1,5 +1,7 @@
 import React from 'react';
 
+import GlyphIcon from './glyph-icon';
+
 function statusAttributes(status) {
   const statusMap = {
     up: {
@@ -64,13 +66,12 @@ export default React.createClass({
   render: function() {
     const attr = this.uiAttrs();
     const btnClass = `btn btn-block btn-${attr.button_type}`;
-    const iconClass = `glyphicon glyphicon-${attr.icon_type}`;
 
     return (
       <button type="button" className={btnClass}>
         <span className="pull-left">
           &nbsp;
-          <span className={iconClass} aria-hidden="true"/>
+          <GlyphIcon icon-type={attr.icon_type} aria-hidden="true"/>
           &nbsp;
         </span>
         <span className="hidden-xs">

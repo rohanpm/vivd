@@ -1,7 +1,8 @@
 import React    from 'react';
 
-import Dispatch     from './dispatch';
-import * as JsonApi from './json-api';
+import Dispatch        from './dispatch';
+import * as JsonApi    from './json-api';
+import ContainerSearch from './container-search';
 
 export default React.createClass({
   links: function() {
@@ -17,7 +18,7 @@ export default React.createClass({
 
     JsonApi.xhr(
       {url: url,
-       onloadend: (event) => {
+       onload: (event) => {
          Dispatch('ajax-finished');
          Dispatch('paged', event.target.response);
          Dispatch('link-activated', link);
@@ -38,34 +39,41 @@ export default React.createClass({
     const links = this.links();
     const pagers = [];
 
+    var prevElem = null;
+    var nextElem = null;
+
     if (links.prev) {
-      pagers.push(
-        <li key="prev" className="previous">
-          <a href="#" onClick={this.pager('prev')}>
-            <span aria-hidden="true">&larr;</span>
-            Previous
-          </a>
-        </li>
+      prevElem = (
+        <a className="btn btn-default" href="#" onClick={this.pager('prev')}>
+          <span aria-hidden="true">&larr;</span>
+          Previous
+        </a>
       );
     }
 
     if (links.next) {
-      pagers.push(
-        <li key="next" className="next">
-          <a href="#" onClick={this.pager('next')}>
-            Next
-            <span aria-hidden="true">&rarr;</span>
-          </a>
-        </li>
+      nextElem = (
+        <a className="btn btn-default" href="#" onClick={this.pager('next')}>
+          Next
+          <span aria-hidden="true">&rarr;</span>
+        </a>
       );
     }
     
     return (
-      <nav>
-        <ul className="pager">
-          {pagers}
-        </ul>
-      </nav>
+      <div className="row">
+        <div className="col-md-2 pull-left">
+          {prevElem}
+        </div>
+        <div className="col-md-1"/>
+        <div className="col-md-6">
+          <ContainerSearch/>
+        </div>
+        <div className="col-md-1"/>
+        <div className="col-md-2 pull-right">
+          {nextElem}
+        </div>
+      </div>
     );
   },
 });

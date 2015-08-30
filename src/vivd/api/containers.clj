@@ -47,14 +47,25 @@
     (Integer/valueOf val)
     default))
 
+(def all-query-keys ["filter[*]"
+                     "page[offset]"
+                     "page[limit]"])
+
+(defn- query-string 
+  ([params]
+     (query-string params all-query-keys))
+  ([params keys]
+     (->> keys
+          (map
+           (fn [key]
+             (if-let [val (params key)]
+               (str key "=" val))))
+          (keep identity)
+          (string/join "&"))))
+
 (defn- paginate-copy-params [{:keys [params] :or {params {}} :as request}]
   (->> ["filter[*]"]
-       (map
-        (fn [key]
-          (if-let [val (params key)]
-            (str key "=" val))))
-       (keep identity)
-       (string/join "&")
+       (query-string params)
        (str "&")))
 
 (defn- first-link [{:keys [uri] :as request} offset limit]
@@ -79,7 +90,7 @@
     (if (< 0 new-limit)
       (link-adjusting-offset request new-offset new-limit))))
 
-(defn- paginate [{:keys [data] :as body} {:keys [params] :as request}]
+(defn- paginate [{:keys [data links] :as body} {:keys [params] :as request}]
   (let [offset     (int-param params "page[offset]" 0)
         limit      (int-param params "page[limit]" 200)
         objects    (drop offset data)
@@ -91,9 +102,9 @@
                      (next-link request offset limit))
         prev-link  (prev-link request offset limit)]
     {:data  objects,
-     :links {:first first-link,
-             :next  next-link,
-             :prev  prev-link}}))
+     :links (merge links {:first first-link,
+                          :next  next-link,
+                          :prev  prev-link})}))
 
 (defn- container-matches? [needle container]
   (some #(if-let [val (% container)]
@@ -105,6 +116,9 @@
     (filter (partial container-matches? needle) vals)
     vals))
 
+(defn- self-link [{:keys [params uri] :as request}]
+  (str uri "?" (query-string params)))
+
 (defn get-containers [{:keys [index] :as services} request]
   (let [vals (index/vals index)
         ; TODO: allow sorting from request
@@ -112,7 +126,8 @@
         vals (apply-filter vals request)]
     {:status 200,
      :body   (paginate
-              {:data (map (partial container-resource services) vals)}
+              {:data   (map (partial container-resource services) vals)
+               :links  {:self (self-link request)}}
               request)}))
 
 (defn- truthy? [x]
@@ -149,6 +164,19 @@
          :body    {:data (container-resource services created)}
          :headers {"location" (str "/a/containers/" id)}}))))
 
+(defn- wrap-default-params [handler {:keys [config]}]
+  (fn [{:keys [params] :as request}]
+    (let [new-params  (merge {"page[limit]"  (:per-page config)
+                              "page[offset]" 0}
+                             params)
+          new-request (merge request {:params new-params})]
+      (handler new-request))))
+
+(defn- wrap-mw [handler services]
+  (-> handler
+      wrap-json-api
+      (wrap-default-params services)))
+
 (defn make [services]
   (wrap-routes
    (fn [request]
@@ -159,4 +187,4 @@
            (get-containers services r))
       (POST "/a/containers" [:as r]
             (create-container services r))))
-   wrap-json-api))
+   wrap-mw services))
