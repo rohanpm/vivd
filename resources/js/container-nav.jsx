@@ -1,49 +1,7 @@
 import React    from 'react';
 
-import Dispatch from './dispatch';
-
-function xhr({method, url, data, responseType, headers, onabort, onerror, onload,
-              onloadstart, onprogress, ontimeout, onloadend})
-{
-  const req = new XMLHttpRequest();
-  headers = headers || {};
-
-  req.responseType = responseType || 'json';
-  req.onabort = onabort;
-  req.onerror = onerror;
-  req.onload = onload;
-  req.onloadstart = onloadstart;
-  req.onprogress = onprogress;
-  req.ontimeout = ontimeout;
-  req.onloadend = onloadend;
-
-  req.open(method || 'GET', url, true);
-
-  for (let key of Object.keys(headers)) {
-    req.setRequestHeader(key, headers[key]);
-  }
-
-  if (data) {
-    req.send(data);
-  } else {
-    req.send();
-  }
-
-  return req;
-}
-
-function apiXhr(args) {
-  args.headers = args.headers || {};
-  args.headers['Accept'] = 'application/vnd.api+json';
-  return xhr(args);
-}
-
-function linkUrl(link) {
-  if (link.hasOwnProperty('href')) {
-    return link['href'];
-  }
-  return link;
-}
+import Dispatch     from './dispatch';
+import * as JsonApi from './json-api';
 
 export default React.createClass({
   links: function() {
@@ -55,9 +13,9 @@ export default React.createClass({
     if (!link) {
       return;
     }
-    const url = linkUrl(link);
+    const url = JsonApi.linkUrl(link);
 
-    apiXhr(
+    JsonApi.xhr(
       {url: url,
        onloadend: (event) => {
          Dispatch('ajax-finished');
@@ -82,7 +40,7 @@ export default React.createClass({
 
     if (links.prev) {
       pagers.push(
-        <li className="previous">
+        <li key="prev" className="previous">
           <a href="#" onClick={this.pager('prev')}>
             <span aria-hidden="true">&larr;</span>
             Previous
@@ -93,7 +51,7 @@ export default React.createClass({
 
     if (links.next) {
       pagers.push(
-        <li className="next">
+        <li key="next" className="next">
           <a href="#" onClick={this.pager('next')}>
             Next
             <span aria-hidden="true">&rarr;</span>

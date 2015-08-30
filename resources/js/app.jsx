@@ -59,7 +59,7 @@ export default React.createClass({
     };
   },
 
-  componentWillMount: function() {
+  componentDidMount: function() {
     Dispatch.on('ajax-started', () => {
       this.setState({loading: true});
     });
