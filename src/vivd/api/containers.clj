@@ -108,12 +108,13 @@
 
 (defn- container-matches? [needle container]
   (some #(if-let [val (% container)]
-           (.contains val needle))
+           (.contains (.toLowerCase val) needle))
         [:id :git-ref :git-revision :git-oneline]))
 
 (defn- apply-filter [vals {:keys [params] :as request}]
   (if-let [needle (params "filter[*]")]
-    (filter (partial container-matches? needle) vals)
+    (let [needle (.toLowerCase needle)]
+      (filter (partial container-matches? needle) vals))
     vals))
 
 (defn- self-link [{:keys [params uri] :as request}]
