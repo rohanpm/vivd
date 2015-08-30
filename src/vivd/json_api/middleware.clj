@@ -2,7 +2,6 @@
   (:require [clojure.tools.logging :as log]
             [clojure.data.json :as json]
             [clojure.string :as str]
-            ring.middleware.params
             [clojure.java.io :as io]
             [schema.core :as s]
             vivd.json-api.schema))
@@ -75,11 +74,6 @@
           (log/error "Internally generated response fails validation:" body)
           (internal-invalid-response bad-parts))
         response))))
-
-(defn- wrap-query-params [handler]
-  (fn [request]
-    (let [new-request (ring.middleware.params/assoc-query-params request "UTF-8")]
-      (handler new-request))))
 
 (defn- json-read-stream [stream]
   (with-open [rdr (io/reader stream)]
@@ -227,5 +221,4 @@
          (wrap-exceptions)
          (wrap-absolute-links)
          (wrap-response-body)
-         (wrap-response-content-type)
-         (wrap-query-params))))
+         (wrap-response-content-type))))

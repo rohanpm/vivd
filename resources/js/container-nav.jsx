@@ -38,22 +38,31 @@ function apiXhr(args) {
   return xhr(args);
 }
 
+function linkUrl(link) {
+  if (link.hasOwnProperty('href')) {
+    return link['href'];
+  }
+  return link;
+}
+
 export default React.createClass({
   links: function() {
     return this.props.containers.links;
   },
 
   page: function(key) {
-    const url = this.links()[key];
-    if (!url) {
+    const link = this.links()[key];
+    if (!link) {
       return;
     }
+    const url = linkUrl(link);
 
     apiXhr(
       {url: url,
        onloadend: (event) => {
          Dispatch('ajax-finished');
          Dispatch('paged', event.target.response);
+         Dispatch('link-activated', link);
        }
       }
     );

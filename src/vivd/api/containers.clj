@@ -49,8 +49,13 @@
 (defn- first-link [uri offset limit]
   (str uri "?page[offset]=0&page[limit]=" limit))
 
+(defn- link-adjusting-offset [uri offset limit]
+  {:href 
+   (str uri "?page[offset]=" offset "&page[limit]=" limit)
+   :meta {:query-params {"page[offset]" offset}}})
+
 (defn- next-link [uri offset limit]
-  (str uri "?page[offset]=" (+ offset limit) "&page[limit]=" limit))
+  (link-adjusting-offset uri (+ offset limit) limit))
 
 (defn- adjust-limit [offset limit]
   (if (> 0 offset)
@@ -61,7 +66,7 @@
   (let [new-offset (- offset limit)
         new-limit  (adjust-limit new-offset limit)]
     (if (< 0 new-limit)
-      (str uri "?page[offset]=" (max 0 new-offset) "&page[limit]=" new-limit))))
+      (link-adjusting-offset uri new-offset new-limit))))
 
 (defn- paginate [{:keys [data] :as body} {:keys [params uri] :as request}]
   (let [offset     (int-param params "page[offset]" 0)

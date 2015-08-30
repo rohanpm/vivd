@@ -10,7 +10,8 @@
             [ring.util.response :refer :all]
             [clojure.tools.logging :as log]
             [clojure.java.io :as io]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            ring.middleware.params))
 
 (set! *warn-on-reflection* true)
 
@@ -18,7 +19,7 @@
   (->> (fn [request]
          {:status 200
           :headers {"content-type" "text/html"}
-          :body (index-page/from-index services)})
+          :body (index-page/from-index services request)})
        (ensuring-method :get)
        (if-uri-is "/")))
 
@@ -92,6 +93,11 @@
   (->> resource-handler*
        (if-uri-starts-with "/public/")))
 
+(defn- wrap-query-params [handler]
+  (fn [request]
+    (let [new-request (ring.middleware.params/assoc-query-params request "UTF-8")]
+      (handler new-request))))
+
 (defn make [config {:keys [index builder] :as services}]
   "Returns a top-level handler for all HTTP requests"
   (let [all-handlers   [(make-redirect-handler index)
@@ -100,7 +106,8 @@
                         (api/make-create-handler index)
                         (api-containers/make services)
                         (make-proxy-handler config builder index)]]
-    (fn [request]
-      (let [response (first (keep #(% request) all-handlers))
-            response (ring.util.response/charset response "utf-8")]
-        response))))
+    (-> (fn [request]
+          (let [response (first (keep #(% request) all-handlers))
+                response (ring.util.response/charset response "utf-8")]
+            response))
+        (wrap-query-params))))

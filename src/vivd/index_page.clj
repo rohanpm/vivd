@@ -28,11 +28,16 @@
          (meta {:charset "utf-8"})
          (stylesheets)))
 
-(defn- state [{:keys [config index] :as services}]
-  (let [{:keys [per-page]}
-                       config
-        req            {:params {"page[limit]" per-page}
-                        :uri    "/a/containers"}
+(defn- request-for-state [{:keys [config]} {:keys [params] :as request}]
+  {:params
+   (merge {"page[limit]" (:per-page config)}
+          (select-keys params ["page[limit]"
+                               "page[offset]"]))
+   :uri
+   "/a/containers"})
+
+(defn- state [{:keys [config index] :as services} request]
+  (let [req            (request-for-state services request)
         {:keys [body]} (containers/get-containers services req)]
     {:title      (:title config)
      :containers body}))
@@ -41,14 +46,14 @@
   (script {:type "text/javascript"}
           (str "serverState = " state ";")))
 
-(defn- render-for-index [{:keys [renderer] :as services}]
-  (let [st (state services)
+(defn- render-for-index [{:keys [renderer] :as services} request]
+  (let [st (state services request)
         st (json/write-str st)]
     (str
      (renderer/render renderer st)
      (set-state-tag st))))
 
-(defn from-index [{:keys [config index renderer] :as services}]
+(defn from-index [{:keys [config index renderer] :as services} request]
   (let [ordered (index/vals index)
         ordered (sort-by :timestamp ordered)
         ordered (reverse ordered)]
@@ -57,5 +62,5 @@
      (html
       (vivd-head config)
       (body
-       (render-for-index services)
+       (render-for-index services request)
        (javascript "public/js/app-bundle.js"))))))
