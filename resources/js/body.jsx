@@ -11,7 +11,7 @@ export default React.createClass({
           {this.props.title}
         </h1>
         <ContainerNav containers={this.props.containers} filter={this.props.inputFilter}/>
-        <ContainerTable containers={this.props.containers}/>
+        <ContainerTable containers={this.props.containers} highlight={this.props.appliedFilter}/>
       </div>
     );
   }
