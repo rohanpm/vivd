@@ -85,7 +85,9 @@
              :prev  prev-link}}))
 
 (defn get-containers [{:keys [index] :as services} request]
-  (let [vals (index/vals index)]
+  (let [vals (index/vals index)
+        ; TODO: allow sorting from request
+        vals (reverse (sort-by :timestamp vals))]
     {:status 200,
      :body   (paginate
               {:data (map (partial container-resource services) vals)}
