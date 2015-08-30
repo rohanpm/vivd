@@ -78,22 +78,34 @@ export default React.createClass({
 
   render: function() {
     const links = this.links();
+    const pagers = [];
+
+    if (links.prev) {
+      pagers.push(
+        <li className="previous">
+          <a href="#" onClick={this.pager('prev')}>
+            <span aria-hidden="true">&larr;</span>
+            Previous
+          </a>
+        </li>
+      );
+    }
+
+    if (links.next) {
+      pagers.push(
+        <li className="next">
+          <a href="#" onClick={this.pager('next')}>
+            Next
+            <span aria-hidden="true">&rarr;</span>
+          </a>
+        </li>
+      );
+    }
     
     return (
       <nav>
         <ul className="pager">
-          <li className={'previous ' +  (links.prev ? '' : 'disabled')}>
-            <a href="#" onClick={this.pager('prev')}>
-              <span aria-hidden="true">&larr;</span>
-              Previous
-            </a>
-          </li>
-          <li className={'next ' + (links.next ? '' : 'disabled')}>
-            <a href="#" onClick={this.pager('next')}>
-              Next
-              <span aria-hidden="true">&rarr;</span>
-            </a>
-          </li>
+          {pagers}
         </ul>
       </nav>
     );
