@@ -67,7 +67,7 @@ export default React.createClass({
         </div>
         <div className="col-md-1"/>
         <div className="col-md-6">
-          <ContainerSearch/>
+          <ContainerSearch filter={this.props.filter}/>
         </div>
         <div className="col-md-1"/>
         <div className="col-md-2 pull-right">

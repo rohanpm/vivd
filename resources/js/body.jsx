@@ -10,7 +10,7 @@ export default React.createClass({
         <h1 className="text-center">
           {this.props.title}
         </h1>
-        <ContainerNav containers={this.props.containers}/>
+        <ContainerNav containers={this.props.containers} filter={this.props.inputFilter}/>
         <ContainerTable containers={this.props.containers}/>
       </div>
     );

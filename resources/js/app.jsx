@@ -4,6 +4,7 @@ import QueryString from 'query-string';
 import Body         from './body';
 import Dispatch     from './dispatch';
 import * as JsonApi from './json-api';
+import debounce     from './debounce';
 
 function updatedQueryString(key, val) {
   const now = QueryString.parse(location.search);
@@ -64,6 +65,12 @@ export default React.createClass({
     };
   },
 
+  applyFilter: debounce(function(str) {
+    Dispatch("replace-api-param", {param: "filter[*]",
+                                   value: str,
+                                   then: () => this.setState({appliedFilter: str})});
+  }, 300),
+
   componentDidMount: function() {
     Dispatch.on('ajax-started', () => {
       this.setState({loading: true});
@@ -77,7 +84,7 @@ export default React.createClass({
       this.setState({containers: obj});
     });
 
-    Dispatch.on('replace-api-param', ({param, value}) => {
+    Dispatch.on('replace-api-param', ({param, value, then}) => {
       const search = location.search;
       const updatedSearch = updatedQueryString(param, value);
       if (search === updatedSearch) {
@@ -89,6 +96,9 @@ export default React.createClass({
       JsonApi.xhr(
         {url: url,
          onload: (event) => {
+           if (then) {
+             then();
+           }
            Dispatch('set-state-and-history', {state: {containers: event.target.response},
                                               search: updatedSearch});
          }
@@ -97,9 +107,8 @@ export default React.createClass({
     });
 
     Dispatch.on('filter-requested', (str) => {
-      this.setState({filter: str});
-      Dispatch("replace-api-param", {param: "filter[*]",
-                                     value: str});
+      this.setState({inputFilter: str});
+      this.applyFilter(str);
     });
 
     Dispatch.on('set-state-and-history', ({state, search}) => {

@@ -37,11 +37,14 @@
    :uri
    "/a/containers"})
 
-(defn- state [{:keys [config index] :as services} request]
+(defn- state [{:keys [config index] :as services} {:keys [params] :as request}]
   (let [req            (request-for-state services request)
-        {:keys [body]} (containers/get-containers services req)]
-    {:title      (:title config)
-     :containers body}))
+        {:keys [body]} (containers/get-containers services req)
+        filter         (params "filter[*]")]
+    {:title         (:title config)
+     :appliedFilter filter
+     :inputFilter   filter
+     :containers    body}))
 
 (defn- set-state-tag [state]
   (script {:type "text/javascript"}
