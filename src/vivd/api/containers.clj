@@ -6,6 +6,7 @@
             [clojure.tools.logging :as log]
             clj-time.core
             clj-time.format
+            [clojure.string :as string]
             [compojure.core :refer [GET POST routing wrap-routes]]))
 
 (def CHARS "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")
@@ -46,39 +47,49 @@
     (Integer/valueOf val)
     default))
 
-(defn- first-link [uri offset limit]
-  (str uri "?page[offset]=0&page[limit]=" limit))
+(defn- paginate-copy-params [{:keys [params] :or {params {}} :as request}]
+  (->> ["filter[*]"]
+       (map
+        (fn [key]
+          (if-let [val (params key)]
+            (str key "=" val))))
+       (keep identity)
+       (string/join "&")
+       (str "&")))
 
-(defn- link-adjusting-offset [uri offset limit]
+(defn- first-link [{:keys [uri] :as request} offset limit]
+  (str uri "?page[offset]=0&page[limit]=" limit (paginate-copy-params request)))
+
+(defn- link-adjusting-offset [{:keys [uri] :as request} offset limit]
   {:href 
-   (str uri "?page[offset]=" offset "&page[limit]=" limit)
+   (str uri "?page[offset]=" offset "&page[limit]=" limit (paginate-copy-params request))
    :meta {:query-params {"page[offset]" offset}}})
 
-(defn- next-link [uri offset limit]
-  (link-adjusting-offset uri (+ offset limit) limit))
+(defn- next-link [request offset limit]
+  (link-adjusting-offset request (+ offset limit) limit))
 
 (defn- adjust-limit [offset limit]
   (if (> 0 offset)
     (+ offset limit)
     limit))
 
-(defn- prev-link [uri offset limit]
+(defn- prev-link [{:keys [uri] :as request} offset limit]
   (let [new-offset (- offset limit)
         new-limit  (adjust-limit new-offset limit)]
     (if (< 0 new-limit)
-      (link-adjusting-offset uri new-offset new-limit))))
+      (link-adjusting-offset request new-offset new-limit))))
 
-(defn- paginate [{:keys [data] :as body} {:keys [params uri] :as request}]
+(defn- paginate [{:keys [data] :as body} {:keys [params] :as request}]
   (let [offset     (int-param params "page[offset]" 0)
         limit      (int-param params "page[limit]" 200)
         objects    (drop offset data)
         objects    (take (+ 1 limit) objects)
         have-next  (> (count objects) limit)
         objects    (take limit objects)
-        first-link (first-link uri offset limit)
+        first-link (first-link request offset limit)
         next-link  (if have-next
-                     (next-link uri offset limit))
-        prev-link  (prev-link uri offset limit)]
+                     (next-link request offset limit))
+        prev-link  (prev-link request offset limit)]
     {:data  objects,
      :links {:first first-link,
              :next  next-link,

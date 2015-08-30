@@ -32,7 +32,8 @@
   {:params
    (merge {"page[limit]" (:per-page config)}
           (select-keys params ["page[limit]"
-                               "page[offset]"]))
+                               "page[offset]"
+                               "filter[*]"]))
    :uri
    "/a/containers"})
 
