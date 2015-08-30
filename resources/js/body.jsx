@@ -1,6 +1,7 @@
 import React          from 'react';
 
 import ContainerTable from './container-table';
+import ContainerNav   from './container-nav';
 
 export default React.createClass({
   render: function() {
@@ -9,6 +10,7 @@ export default React.createClass({
         <h1 className="text-center">
           {this.props.title}
         </h1>
+        <ContainerNav containers={this.props.containers}/>
         <ContainerTable containers={this.props.containers}/>
       </div>
     );

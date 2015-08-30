@@ -21,7 +21,6 @@
                       [watchify "3.3.1"]
                       [barracks "6.0.4"]
                       [react "0.13.3"]
-                      [jquery "2.1.4"]
                       [uglify "0.1.5"]
                       [react-timeago "2.2.1"]]
   :hooks [leiningen.vivd/add-hooks]
