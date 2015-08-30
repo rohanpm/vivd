@@ -16,7 +16,8 @@
 
 (defn stylesheets []
   (clj-map stylesheet ["public/vendor/bootstrap/css/bootstrap.min.css"
-                       "public/vendor/bootstrap/css/bootstrap-theme.min.css"]))
+                       "public/vendor/bootstrap/css/bootstrap-theme.min.css"
+                       "public/css/vivd.css"]))
 
 (defn javascript [src]
   (script {:type "text/javascript"

@@ -61,7 +61,7 @@ export default React.createClass({
     }
     
     return (
-      <div className="row">
+      <div className="row container-nav">
         <div className="col-md-2 pull-left">
           {prevElem}
         </div>
