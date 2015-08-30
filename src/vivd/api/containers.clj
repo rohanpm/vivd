@@ -84,10 +84,21 @@
              :next  next-link,
              :prev  prev-link}}))
 
+(defn- container-matches? [needle container]
+  (some #(if-let [val (% container)]
+           (.contains val needle))
+        [:id :git-ref :git-revision :git-oneline]))
+
+(defn- apply-filter [vals {:keys [params] :as request}]
+  (if-let [needle (params "filter[*]")]
+    (filter (partial container-matches? needle) vals)
+    vals))
+
 (defn get-containers [{:keys [index] :as services} request]
   (let [vals (index/vals index)
         ; TODO: allow sorting from request
-        vals (reverse (sort-by :timestamp vals))]
+        vals (reverse (sort-by :timestamp vals))
+        vals (apply-filter vals request)]
     {:status 200,
      :body   (paginate
               {:data (map (partial container-resource services) vals)}
