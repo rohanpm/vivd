@@ -72,12 +72,23 @@
   (println "uglify...")
   (run! uglify "-s" app-bundle "-o" app-bundle))
 
+; since watchify is async, wait a bit for it to write the bundle
+(defn wait-for-bundle [file]
+  (if (or (not (.exists file))
+          (= 0 (.length file)))
+    (do
+      (Thread/sleep 1000)
+      (recur file))))
+
 (defn with-watchify [f]
   (println "watchify...")
-  (let [proc (-> (ProcessBuilder.
-                  (into-array (concat [watchify] browserify-args)))
-                 (.start))]
+  (let [bundle-file (io/file app-bundle)
+        _           (.delete bundle-file)
+        proc        (-> (ProcessBuilder.
+                         (into-array (concat [watchify] browserify-args)))
+                        (.start))]
     (try
+      (wait-for-bundle bundle-file)
       (f)
       (finally
         (.destroy proc)))))
