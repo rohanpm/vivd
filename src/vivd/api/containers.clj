@@ -64,9 +64,9 @@
           (string/join "&"))))
 
 (defn- paginate-copy-params [{:keys [params] :or {params {}} :as request}]
-  (->> ["filter[*]"]
-       (query-string params)
-       (str "&")))
+  (let [end (query-string params ["filter[*]"])]
+    (if (not (empty? end))
+      (str "&" end))))
 
 (defn- first-link [{:keys [uri] :as request} offset limit]
   (str uri "?page[offset]=0&page[limit]=" limit (paginate-copy-params request)))
