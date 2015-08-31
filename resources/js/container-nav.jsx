@@ -5,6 +5,10 @@ import * as JsonApi    from './json-api';
 import ContainerSearch from './container-search';
 
 export default React.createClass({
+  getDefaultProps: function() {
+    return {containers: {links: {}}};
+  },
+
   links: function() {
     return this.props.containers.links;
   },
