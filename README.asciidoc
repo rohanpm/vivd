@@ -76,58 +76,163 @@ The requirements on the configured docker image and application include:
 
 == API ==
 
-=== POST /a/container ===
+vivd's API follows the http://jsonapi.org/format/[JSON API] format, version 1.0.
 
-POST a single JSON object to /a/container to register a new container.
+=== Resource type: "containers"
 
-Object:
+Represents a container for a particular git ref.
+
+Endpoint: `/a/containers`
+
+==== Attributes
 
   git-ref::
-    A git ref to be fetched
+    A git ref to be fetched. MUST be provided on create.
 
   git-revision::
-    A git commit ID, which must be reachable from git-ref
+    A git revision used for the container, which must be accessible from
+    the git-ref. MUST be provided on create.
 
-Query parameters:
+  git-oneline::
+    Summary of the git commit (similar to `git log --oneline`).
 
-  unique-git-revision::
-    If 1, do not register a new container if one already exists for that
-    git revision
+  status::
+    String describing the status of the container.
 
-Response status codes:
+  timestamp::
+    Time when the container was last used, as a string in ISO8601
+    extended format.
 
-  201::
-    Container was successfully registered, see Location.
+`git-ref` and `git-revision` are the only two attributes which may be written
+via the API, and only when creating a new container.  All other attributes are
+read-only in the API.
 
-  302::
-    A container already exists for this git-revision, see Location.
+==== Links
 
-Response headers:
+  self::
+    The URL of this resource.
 
-  Location::
-    The base URL of the registered container.
+  app::
+    The base URL of the application within the container, e.g. browse to this
+    URL to access the application.
 
-Note that the image or container won't be built or started until it receives a
-request.
+  first::
+    Pagination: points to the first page. (Collection only).
 
-Example:
+  next::
+    Pagination: points to the next page. (Collection only).
 
-  $ curl -v -d '{"git-ref":"refs/heads/master","git-revision":"66be25e9da27c7deca3feb4835b887c659ee5ae3"}' http://localhost:8080/a/container
-  * About to connect() to localhost port 8080 (#0)
-  *   Trying ::1...
-  * Connected to localhost (::1) port 8080 (#0)
-  > POST /create HTTP/1.1
-  > User-Agent: curl/7.29.0
-  > Host: localhost:8080
-  > Accept: */*
-  > Content-Length: 89
-  > Content-Type: application/x-www-form-urlencoded
-  > 
-  * upload completely sent off: 89 out of 89 bytes
-  < HTTP/1.1 201 Created
-  < Date: Fri, 31 Jul 2015 07:53:20 GMT
-  < Location: /1kYX1RlB
-  < Content-Length: 0
-  < Server: Jetty(9.2.10.v20150310)
-  < 
-  
+  prev::
+    Pagination: points to the previous page. (Collection only).
+
+All links are absolute.
+
+Clients MUST not assume that a link currently provided as a string will
+remain so. Please check whether a link is an object or a string before use.
+
+==== Pagination
+
+Pagination is controlled by the query parameters:
+
+  page[limit]::
+    Maximum number of resources to include in the response.
+   If omitted, a server default will apply.
+
+  page[offset]::
+    Start from this offset, e.g. 20 to skip the first 20 items.
+
+==== Filtering
+
+Basic filtering is possible using the `filter` query parameter.
+
+  filter[*]::
+    If a string is provided, only containers with that string contained within
+    a subset of their attributes (case-insensitive) will be found.
+    (The specific set of attributes is undefined.)
+
+==== Example
+
+From URL `/a/containers?page[limit]=3`:
+
+  {
+      "data": [
+          {
+              "attributes": {
+                  "git-oneline": "f85994a WIP add an image for testing\n",
+                  "git-ref": "refs/heads/for-test",
+                  "git-revision": "f85994a7d8ade072f3942984d9b2117cb939a7df",
+                  "status": "up",
+                  "timestamp": "2015-08-30T08:29:28.000Z"
+              },
+              "id": "6lbTpje9",
+              "links": {
+                  "app": "http://localhost:8080/6lbTpje9/code/",
+                  "self": "http://localhost:8080/a/containers/6lbTpje9"
+              },
+              "type": "containers"
+          },
+          {
+              "attributes": {
+                  "git-oneline": "5f29fe0 Make index page nicer.\n",
+                  "git-ref": "refs/heads/master",
+                  "git-revision": "5f29fe0408730f2aece306ef6b2c7479a28cd535",
+                  "status": "stopped",
+                  "timestamp": "2015-08-29T22:53:54.000Z"
+              },
+              "id": "Q8pLcQMn",
+              "links": {
+                  "app": "http://localhost:8080/Q8pLcQMn/code/",
+                  "self": "http://localhost:8080/a/containers/Q8pLcQMn"
+              },
+              "type": "containers"
+          },
+          {
+              "attributes": {
+                  "git-oneline": "5f29fe0 Make index page nicer.\n",
+                  "git-ref": "refs/heads/master",
+                  "git-revision": "5f29fe0408730f2aece306ef6b2c7479a28cd535",
+                  "status": "timed-out",
+                  "timestamp": "2015-08-29T00:57:54.000Z"
+              },
+              "id": "tKdQ3AGf",
+              "links": {
+                  "app": "http://localhost:8080/tKdQ3AGf/code/",
+                  "self": "http://localhost:8080/a/containers/tKdQ3AGf"
+              },
+              "type": "containers"
+          }
+      ],
+      "links": {
+          "first": "http://localhost:8080/a/containers?page[offset]=0&page[limit]=3",
+          "next": {
+              "href": "http://localhost:8080/a/containers?page[offset]=3&page[limit]=3",
+              "meta": {
+                  "query-params": {
+                      "page[offset]": 3
+                  }
+              }
+          },
+          "prev": null,
+          "self": "http://localhost:8080/a/containers?page[offset]=0&page[limit]=3"
+      }
+  }
+
+=== Extensions
+
+==== Errors meta
+
+Error objects may contain these keys under `meta`:
+
+  validation-errors::
+    If an error occurred because a request or response failed JSON API
+    validation, this will be a string providing some information about
+    what failed to validate. Hopefully, but not always, human-readable.
+
+==== Links meta
+
+Link objects may contain these keys under `meta`:
+
+  query-params::
+    If present, this link can also be assembled by starting with the URL
+    of the current document and setting each query parameter according to
+    the contents of this object.
