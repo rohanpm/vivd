@@ -23,6 +23,10 @@ example:
   ; header/title displayed on the index page
   :title "Containers",
 
+  ; default number of containers returned in a single request
+  ; to API or UI
+  :per-page 20,
+
   ; default URL within container to link to from index page
   ; (e.g., if there is something more useful than "/")
   :default-url "/app",
