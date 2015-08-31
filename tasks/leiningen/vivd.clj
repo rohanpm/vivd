@@ -8,6 +8,16 @@
             robert.hooke)
   (:import org.apache.commons.io.FileUtils))
 
+(def browserify "node_modules/.bin/browserify")
+(def watchify   "node_modules/.bin/watchify")
+(def uglify     "node_modules/.bin/uglify")
+(def app-bundle "resources/public/js/app-bundle.js")
+
+(def browserify-args ["resources/js/load.jsx"
+                      "-g" "babelify"
+                      "--extension" ".jsx"
+                      "--outfile" app-bundle])
+
 (defn- resources-dir []
   (io/file "resources/public/vendor"))
 
@@ -35,16 +45,16 @@
         files      (map #(io/file bower-root %) files)]
     (doall (map copy-one-resource files))))
 
-(defn- install-bower-deps [project]
+(defn- install-bower-deps [project & args]
   (println "bower install...")
   (let  [result (leiningen.bower/bower project "install")]
     (assert (= result 0) "bower install failed")))
 
-(defn- install-npm-deps [project]
+(defn- install-npm-deps [project & args]
   (println "npm install...")
   (leiningen.npm/npm project "install"))
 
-(defn- copy-bower-deps [project]
+(defn- copy-bower-deps [project & args]
   (println "bower copy...")
   (copy-bower-dists project)
   (copy-bower-files project))
@@ -54,25 +64,15 @@
     (if (not (= 0 exit))
       (throw (ex-info "external command failed" (merge result {:cmd cmd}))))))
 
-(def browserify "node_modules/.bin/browserify")
-(def watchify   "node_modules/.bin/watchify")
-(def uglify     "node_modules/.bin/uglify")
-(def app-bundle "resources/public/js/app-bundle.js")
-
-(def browserify-args ["resources/js/load.jsx"
-                      "-g" "babelify"
-                      "--extension" ".jsx"
-                      "--outfile" app-bundle])
-
-(defn run-browserify []
+(defn run-browserify [project]
   (println "browserify...")
   (apply run! browserify browserify-args))
 
-(defn run-uglify []
+(defn run-uglify [project]
   (println "uglify...")
   (run! uglify "-s" app-bundle "-o" app-bundle))
 
-(defn with-watchify-proc [f]
+(defn with-watchify [f]
   (println "watchify...")
   (let [proc (-> (ProcessBuilder.
                   (into-array (concat [watchify] browserify-args)))
@@ -82,47 +82,45 @@
       (finally
         (.destroy proc)))))
 
+(defn- do-external-deps [project & args]
+  (doto project
+    (install-bower-deps)
+    (install-npm-deps)))
+
+(defn- run-before-uberjar [project & args]
+  (doto project
+    (do-external-deps)
+    (copy-bower-deps)
+    (run-browserify)
+    (run-uglify)))
+
+(defn- run-before-run [project & args]
+  (doto project
+    (do-external-deps)
+    (copy-bower-deps)))
+
 (def in-hook #{})
-
-(defn- run-before [key f orig-f & args]
-  (if (in-hook key)
-    (apply orig-f args)
-    (with-redefs [in-hook (conj in-hook key)]
-      (f)
-      (apply orig-f args))))
-
-(defn- with-browserify [f & args]
-  (apply run-before :a run-browserify f args))
-
-(defn- with-copy-bower-deps [f project & args]
-  (apply run-before :b #(copy-bower-deps project) f project args))
-
-(defn- with-install-bower-deps [f project & args]
-  (apply run-before :c #(install-bower-deps project) f project args))
-
-(defn- with-uglify [f & args]
-  (apply run-before :d run-uglify f args))
-
-(defn- with-install-npm-deps [f project & args]
-  (apply run-before :e #(install-npm-deps project) f project args))
-
-(defn- with-watchify [f & args]
-  (if (in-hook watchify)
+(defn- run-before [f before-f & args]
+  (if (in-hook f)
     (apply f args)
-    (with-redefs [in-hook (conj in-hook watchify)]
-      (with-watchify-proc
-        #(apply f args)))))
+    (with-redefs [in-hook (conj in-hook f)]
+      (apply before-f args)
+      (apply f args))))
+
+(defn- hook-uberjar [f & args]
+  (apply run-before f run-before-uberjar args))
+
+(defn- hook-deps [f & args]
+  (apply run-before f do-external-deps args))
+
+(defn- hook-run [f & args]
+  (let [bound-f (fn []
+                  (apply f args))
+        new-f   (fn [&_]
+                  (with-watchify bound-f))]
+   (apply run-before new-f run-before-run args)))
 
 (defn add-hooks []
-  (robert.hooke/add-hook #'leiningen.uberjar/uberjar #'with-install-bower-deps)
-  (robert.hooke/add-hook #'leiningen.uberjar/uberjar #'with-copy-bower-deps)
-  (robert.hooke/add-hook #'leiningen.uberjar/uberjar #'with-install-npm-deps)
-  (robert.hooke/add-hook #'leiningen.uberjar/uberjar #'with-browserify)
-  (robert.hooke/add-hook #'leiningen.uberjar/uberjar #'with-uglify)
-
-  (robert.hooke/add-hook #'leiningen.deps/deps #'with-install-bower-deps)
-
-  (robert.hooke/add-hook #'leiningen.run/run #'with-install-bower-deps)
-  (robert.hooke/add-hook #'leiningen.run/run #'with-copy-bower-deps)
-  (robert.hooke/add-hook #'leiningen.run/run #'with-install-npm-deps)
-  (robert.hooke/add-hook #'leiningen.run/run #'with-watchify))
+  (robert.hooke/add-hook #'leiningen.uberjar/uberjar #'hook-uberjar)
+  (robert.hooke/add-hook #'leiningen.deps/deps #'hook-deps)
+  (robert.hooke/add-hook #'leiningen.run/run #'hook-run))
