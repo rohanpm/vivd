@@ -8,15 +8,30 @@ export default React.createClass({
     Dispatch('filter-requested', event.target.value);
   },
 
+  clearSearch: function(event) {
+    Dispatch('filter-requested', '');
+  },
+
   render: function() {
     return (
       <div className="input-group">
-        <input type="text" onChange={this.searchChanged} className="form-control"
-          value={this.props.filter}
-          placeholder="Search..." aria-describedby="container-search"/>
-        <span className="input-group-addon" id="container-search">
+        <span className="input-group-addon">
           <GlyphIcon icon-type="search"/>
         </span>
+        <input type="text" onChange={this.searchChanged} className="form-control"
+          value={this.props.filter}
+          placeholder="Search..."/>
+        {
+          (() => {
+            if (this.props.filter) {
+              return (
+                <span className="input-group-addon" style={{cursor: 'pointer'}} onClick={this.clearSearch}>
+                  <GlyphIcon icon-type="remove"/>
+                </span>
+              );
+            }
+          })()
+         }
       </div>
     );
   },
