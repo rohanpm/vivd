@@ -1,4 +1,4 @@
-(defproject vivd "1.1.2-git"
+(defproject vivd "1.2.0-git"
   :main vivd.main
   :dependencies [[ring "1.4.0"]
                  [org.clojure/clojure "1.7.0"]
