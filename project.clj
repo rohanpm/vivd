@@ -12,7 +12,8 @@
                  [clj-template "1.0.1"]
                  [log4j/log4j "1.2.17"]
                  [prismatic/schema "0.4.4"]
-                 [clj-time "0.10.0"]]
+                 [clj-time "0.10.0"]
+                 [bk/ring-gzip "0.1.1"]]
   :bower-dependencies [[bootstrap "3.3.5"]]
   :bower {:directory "bower_components"
           :copy-dist ["bootstrap"]}

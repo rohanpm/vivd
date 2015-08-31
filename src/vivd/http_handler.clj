@@ -11,7 +11,8 @@
             [clojure.tools.logging :as log]
             [clojure.java.io :as io]
             [clojure.string :as str]
-            ring.middleware.params))
+            ring.middleware.params
+            [ring.middleware.gzip :refer [wrap-gzip]]))
 
 (set! *warn-on-reflection* true)
 
@@ -98,16 +99,20 @@
     (let [new-request (ring.middleware.params/assoc-query-params request "UTF-8")]
       (handler new-request))))
 
-(defn make [config {:keys [index builder] :as services}]
-  "Returns a top-level handler for all HTTP requests"
+(defn make* [config {:keys [index builder] :as services}]
   (let [all-handlers   [(make-redirect-handler index)
                         resource-handler
                         (make-index-handler services)
                         (api/make-create-handler index)
                         (api-containers/make services)
                         (make-proxy-handler config builder index)]]
-    (-> (fn [request]
-          (let [response (first (keep #(% request) all-handlers))
-                response (ring.util.response/charset response "utf-8")]
-            response))
-        (wrap-query-params))))
+    (fn [request]
+      (let [response (first (keep #(% request) all-handlers))
+            response (ring.util.response/charset response "utf-8")]
+        response))))
+
+(defn make [config services]
+  "Returns a top-level handler for all HTTP requests"
+  (-> (make* config services)
+      (wrap-query-params)
+      (wrap-gzip)))
