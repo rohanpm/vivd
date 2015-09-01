@@ -6,10 +6,12 @@ import Dispatch     from './dispatch';
 import * as JsonApi from './json-api';
 import debounce     from './debounce';
 
-function updatedQueryString(key, val) {
+function updatedQueryString(params) {
   const now = QueryString.parse(location.search);
   const updated = Object.assign({}, now);
-  updated[key] = val;
+  for (let key of Object.keys(params)) {
+    updated[key] = params[key];
+  }
   return '?' + QueryString.stringify(updated);
 }
 
@@ -66,9 +68,10 @@ export default React.createClass({
   },
 
   applyFilter: debounce(function(str) {
-    Dispatch("replace-api-param", {param: "filter[*]",
-                                   value: str,
-                                   then: () => this.setState({appliedFilter: str})});
+    Dispatch("replace-api-params", {params:
+                                    {"filter[*]":    str,
+                                     "page[offset]": 0},
+                                    then: () => this.setState({appliedFilter: str})});
   }, 300),
 
   componentDidMount: function() {
@@ -84,9 +87,9 @@ export default React.createClass({
       this.setState({containers: obj});
     });
 
-    Dispatch.on('replace-api-param', ({param, value, then}) => {
+    Dispatch.on('replace-api-params', ({params, then}) => {
       const search = location.search;
-      const updatedSearch = updatedQueryString(param, value);
+      const updatedSearch = updatedQueryString(params);
       if (search === updatedSearch) {
         console.log("No change to search", search);
         return;
