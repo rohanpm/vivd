@@ -6,3 +6,10 @@
 mark {
   padding: 0px;
 }
+
+/* fix the columns so the table doesn't jump as different containers
+   with different string lengths are loaded */
+td.id         { width: 10%; }
+td.git        { width: 65%; }
+td.timestamp  { width: 10%; }
+td.status     { width: 13%; }

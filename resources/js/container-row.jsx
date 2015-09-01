@@ -44,18 +44,18 @@ export default React.createClass({
     const c = this.props.container;
     return (
       <tr>
-        <td>
+        <td className="id">
           <a href={c.links.app}>
             <MarkedText text={c.id} mark={this.props.highlight}/>
           </a>
         </td>
-        <td>
+        <td className="git">
           {this.gitElement(c.attributes)}
         </td>
-        <td>
+        <td className="timestamp">
           <TimeAgo date={c.attributes.timestamp} title={c.attributes.timestamp}/>
         </td>
-        <td>
+        <td className="status">
           <ContainerButton container={c}/>
         </td>
       </tr>
