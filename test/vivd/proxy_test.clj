@@ -1,5 +1,6 @@
 (ns vivd.proxy-test
   (:require [vivd.proxy :refer [get-proxy-request]]
+            [vivd.api-test :refer [str-stream]]
             vivd.container
             clojure.core.cache
             [midje.sweet :refer :all]))
@@ -42,10 +43,10 @@
     (fact "passes through expected values"
       (get-proxy-request (merge base-request {:request-method :foo
                                               :query-string   "hi&there"
-                                              :body           "some-body"}) test-config test-container)
+                                              :body           (str-stream "some-body")}) test-config test-container)
       => (contains {:request-method :foo
                     :query-string   "hi&there"
-                    :body           "some-body"}))
+                    :body           (partial instance? java.io.InputStream)}))
 
     (fact "passes through headers"
       (get-proxy-request (merge base-request {:headers {"content-type" "text/plain"

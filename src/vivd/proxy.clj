@@ -17,10 +17,23 @@
               "x-forwarded-for"  remote-addr
               "x-forwarded-host" (headers "host")})))
 
-(defn get-proxy-request [request config c]
-  (let [[ip port] (container/get-host-port config c)]
+; For proxying a request, we need the stream to be buffered, so that
+; we can retry if something goes wrong. (ignore close for the same reason)
+(defn- to-buffered-stream [stream]
+  (if stream
+    (proxy [java.io.BufferedInputStream] [stream 16384]
+      (close []))))
+
+(defn- buffer-request-body [{:keys [body] :as request}]
+  (if body
+    (update request :body to-buffered-stream)
+    request))
+
+(defn get-proxy-request [{:keys [container-uri body] :as request} config c]
+  (let [[ip port] (container/get-host-port config c)
+        request   (buffer-request-body request)]
     (merge
-     {:uri (str "/" (:container-uri request))
+     {:uri (str "/" container-uri)
       :scheme :http
       :throw-exceptions false
       :headers (get-proxy-headers request ip port)
@@ -30,7 +43,7 @@
       :follow-redirects false}
      (select-keys request [:query-string :request-method :body]))))
 
-(defn try-request [config request c]
+(defn try-request [config {:keys [^java.io.InputStream body] :as request} c]
   (let [continue?
         (fn []
           (let [started (container/started-time c)
@@ -44,12 +57,14 @@
                 _        (log/debug "continue" continue)]
             continue))]
     (loop []
+      (if body (.mark body 16384))
       (or (try
             (http/request request)
             (catch Exception e
               (if (not (continue?))
                 (throw e))
               (log/debug "no response - will retry" e)
+              (if body (.reset body))
               (Thread/sleep 2000)
               nil))
           (recur)))))
