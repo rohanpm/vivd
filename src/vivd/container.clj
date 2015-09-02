@@ -167,10 +167,13 @@
   (if (not (have-git-revision? git-revision))
     (throw (ex-info (str "Fetching " git-url " " git-ref " did not provide " git-revision) {}))))
 
+(defn- git-log [& args]
+  (-> (apply git! "log" "-n1" args)
+      (:out)))
+
 (defn- extended-git-info [{:keys [git-revision]}]
-  {:git-oneline (->> git-revision
-                     (git! "log" "--oneline" "-n1")
-                     (:out))})
+  {:git-oneline (git-log git-revision "--oneline")
+   :git-log     (git-log git-revision)})
 
 (defn- ensure-git-fetched [config {:keys [git-revision] :as c}]
   (ensure-git-init)
