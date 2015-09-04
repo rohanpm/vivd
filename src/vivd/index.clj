@@ -91,7 +91,16 @@
                      (remove-file id)
                      (dissoc val id))))
 
-(defn update [{:keys [index-ref file-writer-chan]} {:keys [id] :as c}]
+(defn- do-callbacks [c callbacks]
+  (doseq [f callbacks]
+    (try
+      (f c)
+      (catch Exception e
+        (log/error "Callback for container" c "failed:" e)))))
+
+(defn update [{:keys [index-ref file-writer-chan on-update]
+               :or   {on-update (atom [])}}
+              {:keys [id] :as c}]
   "Update the data for a single container in the index. This will synchronously
    update the in-memory index and asynchronously update the file backing store."
   (let [current-value (@index-ref id)]
@@ -99,7 +108,12 @@
       (log/debug "No-op update for" id)
       (do
         (swap! index-ref (fn [val] (merge val {id c})))
+        (do-callbacks c @on-update)
         (>!! file-writer-chan id)))))
+
+(defn watch-update [{:keys [on-update]} fn]
+  "Add a callback to be invoked whenever a container is updated."
+  (swap! on-update conj fn))
 
 (defn make []
   "Creates and returns a new index object, with the given config. The index is
@@ -111,4 +125,5 @@
         _                (file-writer-loop ref file-writer-chan)]
     (swap! ref (fn [_] (read-index)))
     {:index-ref ref
-     :file-writer-chan file-writer-chan}))
+     :file-writer-chan file-writer-chan
+     :on-update (atom [])}))
