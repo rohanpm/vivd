@@ -15,7 +15,7 @@ export default React.createClass({
   renderShowingLog: function() {
     return (
       <div className="container-fluid">
-        <ContainerLogs containerId={this.props.showingLog}/>
+        <ContainerLogs containerId={this.props.showingLog} showTimestamp={this.props.showingLogTimestamps}/>
       </div>
     );
   },

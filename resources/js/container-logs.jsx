@@ -6,7 +6,28 @@ import * as Links from './links';
 
 export default React.createClass({
   getInitialState: function() {
-    return {logText: ''};
+    return {timestampedLogText: '',
+            notTimestampedLogText: ''};
+  },
+
+  getDefaultProps: function() {
+    return {showTimestamp: false};
+  },
+
+  toggleTimestamps: function() {
+    Dispatch('show-log-timestamps', !this.props.showTimestamp);
+  },
+
+  getLogText: function() {
+    return this.props.showTimestamp ? this.state.timestampedLogText : this.state.notTimestampedLogText;
+  },
+
+  addLogText: function(msg) {
+    const firstSpace = msg.indexOf(' ');
+    const msgWithoutTimestamp = msg.substring(firstSpace + 1);
+    const timestampedLogText    = this.state.timestampedLogText + msg + "\n";
+    const notTimestampedLogText = this.state.notTimestampedLogText + msgWithoutTimestamp + "\n";
+    this.setState({timestampedLogText, notTimestampedLogText});
   },
 
   close: function(evt) {
@@ -18,16 +39,30 @@ export default React.createClass({
     return (
       <div className="panel panel-default" style={{marginTop: 20}}>
         <div className="panel-heading">
-          <h3 className="panel-title">
-            Logs for {this.props.containerId}
-            <a href={Links.currentUrlWithParams({log: null})} className="pull-right" onClick={this.close}>
-              <GlyphIcon icon-type="remove"/>
-            </a>
-          </h3>
+          <div className="row">
+            <div className="col-md-3">
+              <strong style={{fontSize: 18}}>
+                Logs for {this.props.containerId}
+              </strong>
+            </div>
+            <div className="col-md-2">
+              <label>
+                <input type="checkbox" onChange={this.toggleTimestamps} checked={this.props.showTimestamp}/>
+                &nbsp;
+                Show timestamps
+              </label>
+            </div>
+            <div className="col-md-6"/>
+            <div className="col-md-1">
+              <a href={Links.currentUrlWithParams({log: null})} className="pull-right" onClick={this.close}>
+                <GlyphIcon icon-type="remove"/>
+              </a>
+            </div>
+          </div>
         </div>
         <div className="panel-body">
           <pre>
-            {this.state.logText}
+            {this.getLogText()}
           </pre>
         </div>
       </div>
@@ -37,7 +72,7 @@ export default React.createClass({
   componentDidMount: function() {
     this.eventSource = new EventSource(`/a/containers/${this.props.containerId}/logs`);
     this.eventSource.onmessage = message => {
-      this.setState({logText: this.state.logText + message.data + "\n"});
+      this.addLogText(message.data);
     };
   },
 

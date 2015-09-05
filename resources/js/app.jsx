@@ -171,6 +171,11 @@ export default React.createClass({
         history.pushState(this.state, "", updatedQueryString({log: null}));
       });
     });
+    Dispatch.on('show-log-timestamps', b => {
+      this.setState({showingLogTimestamps: b}, () => {
+        history.replaceState(this.state, "", updatedQueryString({logTimestamp: b ? 1 : null}));
+      });
+    });
 
     this.addHistoryHooks();
     this.setupEventSource();

@@ -37,16 +37,30 @@
    :uri
    "/a/containers"})
 
+(defn- truthy? [x]
+  (#{"1" 1 "true" true "yes"} x))
+
+(def state-params
+  [[:inputFilter   "filter[*]"           identity nil]
+   [:appliedFilter "filter[*]"           identity nil]
+   [:showingLog    "log"                 identity nil]
+   [:showingLogTimestamps "logTimestamp" truthy?  false]])
+
+(defn state-from-params* [params acc [key param-key param-fn param-default]]
+  (let [val (get params param-key param-default)
+        val (param-fn val)]
+    (merge acc {key val})))
+
+(defn state-from-params [params]
+  (reduce (partial state-from-params* params) {} state-params))
+
 (defn- state [{:keys [config index] :as services} {:keys [params] :as request}]
   (let [req            (request-for-state services request)
-        {:keys [body]} (containers/get-containers services req)
-        filter         (params "filter[*]")
-        log            (params "log")]
-    {:title         (:title config)
-     :appliedFilter filter
-     :inputFilter   filter
-     :showingLog    log
-     :containers    body}))
+        {:keys [body]} (containers/get-containers services req)]
+    (merge
+     {:title         (:title config)
+      :containers    body}
+     (state-from-params params))))
 
 (defn- set-state-tag [state]
   (script {:type "text/javascript"}
