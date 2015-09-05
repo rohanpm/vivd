@@ -23,13 +23,11 @@ export default React.createClass({
     JsonApi.xhr(
       {url: url,
        onload: (event) => {
-         Dispatch('ajax-finished');
          Dispatch('paged', event.target.response);
          Dispatch('link-activated', link);
        }
       }
     );
-    Dispatch('ajax-started');
   },
 
   pager: function(key) {

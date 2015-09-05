@@ -19,14 +19,6 @@ export default React.createClass({
   },
 
   componentDidMount: function() {
-    Dispatch.on('ajax-started', () => {
-      this.setState({loading: true});
-    });
-
-    Dispatch.on('ajax-finished', () => {
-      this.setState({loading: false});
-    });
-
     Dispatch.on('paged', (obj) => {
       this.setState({containers: obj});
     });
