@@ -1,7 +1,7 @@
 import Dispatch   from '../dispatch';
 import * as Links from '../links';
 
-export default class History {
+export default class {
   constructor(app) {
     this.app = app;
 

@@ -2,10 +2,10 @@ import React       from 'react';
 import QueryString from 'query-string';
 
 import AppHistory   from './app/history';
+import AppFilter    from './app/filter';
 import Body         from './body';
 import Dispatch     from './dispatch';
 import * as JsonApi from './json-api';
-import debounce     from './debounce';
 import * as Links   from './links';
 
 export default React.createClass({
@@ -16,13 +16,6 @@ export default React.createClass({
       containers: {data: []}
     };
   },
-
-  applyFilter: debounce(function(str) {
-    Dispatch("replace-api-params", {params:
-                                    {"filter[*]":    (str === '') ? null : str,
-                                     "page[offset]": null},
-                                    then: () => this.setState({appliedFilter: str})});
-  }, 300),
 
   setupEventSource: function() {
     var url;
@@ -68,29 +61,6 @@ export default React.createClass({
       this.setState({containers: obj});
     });
 
-    Dispatch.on('replace-api-params', ({params, then}) => {
-      // NOTE: requires index and API to have compatible params
-      const apiUrl = Links.urlWithParams('/a/containers' + location.search, params);
-      const uiUrl = Links.currentUrlWithParams(params);
-      JsonApi.xhr(
-        {url: apiUrl,
-         onload: (event) => {
-           if (then) {
-             then();
-           }
-           this.setState({containers: event.target.response}, () => {
-             history.pushState(this.state, "", uiUrl);
-           });
-         }
-        }
-      );
-    });
-
-    Dispatch.on('filter-requested', (str) => {
-      this.setState({inputFilter: str});
-      this.applyFilter(str);
-    });
-
     Dispatch.on('sse', o => {
       if (o.type === "containers") {
         this.mergeContainer(o);
@@ -114,7 +84,8 @@ export default React.createClass({
     });
 
     this.components = [
-      new AppHistory(this)
+      new AppHistory(this),
+      new AppFilter(this),
     ];
 
     this.setupEventSource();
