@@ -1,6 +1,7 @@
 import React       from 'react';
 import QueryString from 'query-string';
 
+import AppHistory   from './app/history';
 import Body         from './body';
 import Dispatch     from './dispatch';
 import * as JsonApi from './json-api';
@@ -8,23 +9,6 @@ import debounce     from './debounce';
 import * as Links   from './links';
 
 export default React.createClass({
-  addHistoryHooks: function() {
-    Dispatch.on('link-activated', (link) => {
-      // When a link is activated, if the link has meta for updating the query
-      // string, then push it along with current state.
-      const newUrl = Links.adjustUrlForLink(link);
-      if (newUrl) {
-        history.pushState(this.state, "", newUrl);
-      }
-    });
-
-    window.onpopstate = event => {
-      this.setState(event.state);
-    };
-
-    // need to associate the initial state
-    history.replaceState(this.state, "", "");
-  },
 
   getInitialState: function() {
     return this.props.initialState || {
@@ -129,7 +113,10 @@ export default React.createClass({
       });
     });
 
-    this.addHistoryHooks();
+    this.components = [
+      new AppHistory(this)
+    ];
+
     this.setupEventSource();
   },
 
