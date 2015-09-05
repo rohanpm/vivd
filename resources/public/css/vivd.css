@@ -12,4 +12,8 @@ mark {
 td.id         { width: 10%; }
 td.git        { width: 65%; }
 td.timestamp  { width: 10%; }
-td.status     { width: 13%; }
+td.status     { width: 14%; }
+
+td.status .btn-group .btn:first-child {
+  width: 110px;
+}

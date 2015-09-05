@@ -10,7 +10,11 @@ function updatedQueryString(params) {
   const now = QueryString.parse(location.search);
   const updated = Object.assign({}, now);
   for (let key of Object.keys(params)) {
-    updated[key] = params[key];
+    if (params[key] === null) {
+      delete updated[key];
+    } else {
+      updated[key] = params[key];
+    }
   }
   return '?' + QueryString.stringify(updated);
 }
@@ -91,7 +95,6 @@ export default React.createClass({
   mergeContainer: function(c) {
     const id = c.id;
     const data = this.state.containers.data;
-    console.log("Would merge: " + id);
 
     var anyUpdated = false;
     for (let stateC of data) {
@@ -147,14 +150,26 @@ export default React.createClass({
     });
 
     Dispatch.on('set-state-and-history', ({state, search}) => {
-      this.setState(state);
-      history.pushState(this.state, "", search);
+      this.setState(state, () => {
+        history.pushState(this.state, "", search);
+      });
     });
 
     Dispatch.on('sse', o => {
       if (o.type === "containers") {
         this.mergeContainer(o);
       }
+    });
+
+    Dispatch.on('request-log', c => {
+      this.setState({showingLog: c.id}, () => {
+        history.pushState(this.state, "", updatedQueryString({log: c.id}));
+      });
+    });
+    Dispatch.on('close-log', () => {
+      this.setState({showingLog: null}, () => {
+        history.pushState(this.state, "", updatedQueryString({log: null}));
+      });
     });
 
     this.addHistoryHooks();

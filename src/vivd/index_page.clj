@@ -41,10 +41,12 @@
 (defn- state [{:keys [config index] :as services} {:keys [params] :as request}]
   (let [req            (request-for-state services request)
         {:keys [body]} (containers/get-containers services req)
-        filter         (params "filter[*]")]
+        filter         (params "filter[*]")
+        log            (params "log")]
     {:title         (:title config)
      :appliedFilter filter
      :inputFilter   filter
+     :showingLog    log
      :containers    body}))
 
 (defn- set-state-tag [state]

@@ -4,6 +4,9 @@
 // bundle.
 window = {};
 
+// TODO: fill in this with info from the request
+location = null;
+
 console = {
   _jlog: java.util.logging.Logger.getLogger('app-bundle.js'),
   log: function() {

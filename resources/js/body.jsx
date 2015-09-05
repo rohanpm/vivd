@@ -1,10 +1,26 @@
 import React          from 'react';
 
+import ContainerLogs  from './container-logs';
 import ContainerTable from './container-table';
 import ContainerNav   from './container-nav';
 
 export default React.createClass({
   render: function() {
+    if (this.props.showingLog) {
+      return this.renderShowingLog();
+    }
+    return this.renderContainerTable();
+  },
+
+  renderShowingLog: function() {
+    return (
+      <div className="container-fluid">
+        <ContainerLogs containerId={this.props.showingLog}/>
+      </div>
+    );
+  },
+
+  renderContainerTable: function() {
     return (
       <div className="container">
         <h1 className="text-center">
