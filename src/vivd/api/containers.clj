@@ -1,5 +1,6 @@
 (ns vivd.api.containers
   (:require [vivd.api.schema :refer [ContainerResourceIn]]
+            [vivd.api.containers.logs :refer [container-logs]]
             [vivd.json-api.middleware :refer [wrap-json-api]]
             [vivd.json-api.utils :refer [extract-resource]]
             [vivd.index :as index]
@@ -13,9 +14,12 @@
 (defn- generate-id []
   (apply str (map (fn [_] (rand-nth CHARS)) (range 8))))
 
-(defn- links-for-container [{:keys [config]} {:keys [id] :as container}]
+(defn- links-for-container [{:keys [config]} {:keys [id docker-container-id] :as container}]
   (let [{:keys [default-url]} config]
     {:self (str "/a/containers/" id)
+     :logs (if docker-container-id
+             ; cannot fetch logs until container is created
+             (str "/a/containers/" id "/logs"))
      :app  (str "/" id default-url)}))
 
 (def iso8601-formatter
@@ -179,8 +183,7 @@
       wrap-json-api
       (wrap-default-params services)))
 
-(defn make [services]
-  (wrap-routes
+(defn- with-mw-handler [services]
    (fn [request]
      (routing request
       (GET "/a/containers/:id" [id :as r]
@@ -188,5 +191,19 @@
       (GET "/a/containers" [:as r]
            (get-containers services r))
       (POST "/a/containers" [:as r]
-            (create-container services r))))
-   wrap-mw services))
+            (create-container services r)))))
+
+(defn- other-handler [services]
+   (fn [request]
+     (routing request
+      (GET "/a/containers/:id/logs" [id :as r]
+           (container-logs services r id)))))
+
+(defn make [services]
+  (let [mw-handler (with-mw-handler services)
+        mw-handler (wrap-routes mw-handler wrap-mw services)
+        other-handler (other-handler services)]
+    (fn [request]
+      (or
+       (mw-handler request)
+       (other-handler request)))))
