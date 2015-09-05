@@ -1,8 +1,11 @@
 import QueryString from 'query-string';
 
-export function currentUrlWithParams(params) {
-  const hereWithoutSearch = location ? `${location.protocol}//${location.host}${location.pathname}` : '/';
-  const now = QueryString.parse(location ? location.search : '');
+export function urlWithParams(url, params) {
+  const split = url.split('?');
+  const base = split[0];
+  const search = split[1] || '';
+
+  const now = QueryString.parse(search);
   const updated = Object.assign({}, now);
   for (let key of Object.keys(params)) {
     if (params[key] === null) {
@@ -11,5 +14,24 @@ export function currentUrlWithParams(params) {
       updated[key] = params[key];
     }
   }
-  return `${hereWithoutSearch}?${QueryString.stringify(updated)}`;
+
+  return `${base}?${QueryString.stringify(updated)}`;
+}
+
+export function currentUrlWithParams(params) {
+  return urlWithParams(location.href, params);
+}
+
+export function adjustUrlForLink(link) {
+  const meta = link.meta;
+  if (!meta) {
+    return null;
+  }
+
+  const query_params = meta['query-params'];
+  if (!query_params) {
+    return null;
+  }
+
+  return currentUrlWithParams(query_params);
 }

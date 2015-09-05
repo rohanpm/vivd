@@ -5,54 +5,16 @@ import Body         from './body';
 import Dispatch     from './dispatch';
 import * as JsonApi from './json-api';
 import debounce     from './debounce';
-
-function updatedQueryString(params) {
-  const now = QueryString.parse(location.search);
-  const updated = Object.assign({}, now);
-  for (let key of Object.keys(params)) {
-    if (params[key] === null) {
-      delete updated[key];
-    } else {
-      updated[key] = params[key];
-    }
-  }
-  return '?' + QueryString.stringify(updated);
-}
-
-function searchForLink(link) {
-  const meta = link.meta;
-  if (!meta) {
-    return null;
-  }
-
-  const query_params = meta['query-params'];
-  if (!query_params) {
-    return null;
-  }
-
-  const now = QueryString.parse(location.search);
-  const updated = Object.assign({}, now);
-  var any = false;
-  for (let key of Object.keys(query_params)) {
-    any = true;
-    updated[key] = query_params[key];
-  }
-
-  if (!any) {
-    return null;
-  }
-
-  return QueryString.stringify(updated);
-}
+import * as Links   from './links';
 
 export default React.createClass({
   addHistoryHooks: function() {
     Dispatch.on('link-activated', (link) => {
       // When a link is activated, if the link has meta for updating the query
       // string, then push it along with current state.
-      const newSearch = searchForLink(link);
-      if (newSearch) {
-        history.pushState(this.state, "", '?' + newSearch);
+      const newUrl = Links.adjustUrlForLink(link);
+      if (newUrl) {
+        history.pushState(this.state, "", newUrl);
       }
     });
 
@@ -123,22 +85,18 @@ export default React.createClass({
     });
 
     Dispatch.on('replace-api-params', ({params, then}) => {
-      const search = location.search;
-      const updatedSearch = updatedQueryString(params);
-      if (search === updatedSearch) {
-        console.log("No change to search", search);
-        return;
-      }
-
-      const url = '/a/containers' + updatedSearch;
+      // NOTE: requires index and API to have compatible params
+      const apiUrl = Links.urlWithParams('/a/containers' + location.search, params);
+      const uiUrl = Links.currentUrlWithParams(params);
       JsonApi.xhr(
-        {url: url,
+        {url: apiUrl,
          onload: (event) => {
            if (then) {
              then();
            }
-           Dispatch('set-state-and-history', {state: {containers: event.target.response},
-                                              search: updatedSearch});
+           this.setState({containers: event.target.response}, () => {
+             history.pushState(this.state, "", uiUrl);
+           });
          }
         }
       );
@@ -149,12 +107,6 @@ export default React.createClass({
       this.applyFilter(str);
     });
 
-    Dispatch.on('set-state-and-history', ({state, search}) => {
-      this.setState(state, () => {
-        history.pushState(this.state, "", search);
-      });
-    });
-
     Dispatch.on('sse', o => {
       if (o.type === "containers") {
         this.mergeContainer(o);
@@ -163,17 +115,17 @@ export default React.createClass({
 
     Dispatch.on('request-log', c => {
       this.setState({showingLog: c.id}, () => {
-        history.pushState(this.state, "", updatedQueryString({log: c.id}));
+        history.pushState(this.state, "", Links.currentUrlWithParams({log: c.id}));
       });
     });
     Dispatch.on('close-log', () => {
       this.setState({showingLog: null}, () => {
-        history.pushState(this.state, "", updatedQueryString({log: null}));
+        history.pushState(this.state, "", Links.currentUrlWithParams({log: null}));
       });
     });
     Dispatch.on('show-log-timestamps', b => {
       this.setState({showingLogTimestamps: b}, () => {
-        history.replaceState(this.state, "", updatedQueryString({logTimestamp: b ? 1 : null}));
+        history.replaceState(this.state, "", Links.currentUrlWithParams({logTimestamp: b ? 1 : null}));
       });
     });
 
