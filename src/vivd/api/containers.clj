@@ -128,7 +128,8 @@
     {:status 200,
      :body   (paginate
               {:data   (map (partial container-resource services) vals)
-               :links  {:self (self-link request)}}
+               :links  {:self   (self-link request)
+                        :events "/a/events"}}
               request)}))
 
 (defn- truthy? [x]

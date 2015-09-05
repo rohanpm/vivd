@@ -74,6 +74,38 @@ export default React.createClass({
                                     then: () => this.setState({appliedFilter: str})});
   }, 300),
 
+  setupEventSource: function() {
+    var url;
+    try {
+      url = JsonApi.linkUrl(this.state.containers.links.events);
+    } catch (e) {}
+    if (!url) {
+      console.warn("Missing 'events' link");
+      return;
+    }
+
+    const source = new EventSource(url);
+    source.onmessage = e => Dispatch('sse', JSON.parse(e.data));
+  },
+
+  mergeContainer: function(c) {
+    const id = c.id;
+    const data = this.state.containers.data;
+    console.log("Would merge: " + id);
+
+    var anyUpdated = false;
+    for (let stateC of data) {
+      if (stateC.id === id) {
+        anyUpdated = true;
+        Object.assign(stateC, c);
+      }
+    }
+
+    if (anyUpdated) {
+      this.forceUpdate();
+    }
+  },
+
   componentDidMount: function() {
     Dispatch.on('ajax-started', () => {
       this.setState({loading: true});
@@ -119,7 +151,14 @@ export default React.createClass({
       history.pushState(this.state, "", search);
     });
 
+    Dispatch.on('sse', o => {
+      if (o.type === "containers") {
+        this.mergeContainer(o);
+      }
+    });
+
     this.addHistoryHooks();
+    this.setupEventSource();
   },
 
   render: function() {
