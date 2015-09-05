@@ -20,6 +20,7 @@ export default React.createClass({
         </span>
         <input type="text" onChange={this.searchChanged} className="form-control"
           value={this.props.filter}
+          autoComplete="off"
           placeholder="Search..."/>
         {
           (() => {
