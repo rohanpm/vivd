@@ -73,8 +73,8 @@ export default React.createClass({
 
   applyFilter: debounce(function(str) {
     Dispatch("replace-api-params", {params:
-                                    {"filter[*]":    str,
-                                     "page[offset]": 0},
+                                    {"filter[*]":    (str === '') ? null : str,
+                                     "page[offset]": null},
                                     then: () => this.setState({appliedFilter: str})});
   }, 300),
 
