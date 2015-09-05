@@ -54,12 +54,40 @@
 (defn state-from-params [params]
   (reduce (partial state-from-params* params) {} state-params))
 
+(defn location-for-request [{:keys [server-port server-name uri query-string scheme]
+                             :or   {server-port  80
+                                    server-name  "localhost"
+                                    uri          "/"
+                                    query-string nil
+                                    scheme       :http}}]
+  (let [host (str server-name
+                  (if (= server-port 80)
+                    ""
+                    (str ":" server-port)))
+        protocol (str (name scheme) ":")
+        origin   (str protocol "//" host)
+        href     (str origin uri
+                      (if query-string
+                        (str "?" query-string)))]
+    {:href     href
+     :protocol protocol
+     :host     host
+     :hostname server-name
+     :port     server-port
+     :pathname uri
+     :search   (str "?" query-string)
+     :hash     "#"
+     :username nil
+     :password nil
+     :origin   origin}))
+
 (defn- state [{:keys [config index] :as services} {:keys [params] :as request}]
   (let [req            (request-for-state services request)
         {:keys [body]} (containers/get-containers services req)]
     (merge
      {:title         (:title config)
-      :containers    body}
+      :containers    body
+      :_location     (location-for-request request)}
      (state-from-params params))))
 
 (defn- set-state-tag [state]
