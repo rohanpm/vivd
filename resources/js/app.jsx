@@ -4,9 +4,9 @@ import QueryString from 'query-string';
 import AppHistory     from './app/history';
 import AppFilter      from './app/filter';
 import AppEventSource from './app/eventsource';
+import AppPager       from './app/pager';
 import Body           from './body';
 import Dispatch       from './dispatch';
-import * as JsonApi   from './json-api';
 import * as Links     from './links';
 
 export default React.createClass({
@@ -19,11 +19,6 @@ export default React.createClass({
   },
 
   componentDidMount: function() {
-    Dispatch.on('paged', (obj) => {
-      this.setState({containers: obj});
-    });
-
-
     Dispatch.on('request-log', c => {
       this.setState({showingLog: c.id}, () => {
         history.pushState(this.state, "", Links.currentUrlWithParams({log: c.id}));
@@ -44,6 +39,7 @@ export default React.createClass({
       new AppHistory(this),
       new AppFilter(this),
       new AppEventSource(this),
+      new AppPager(this),
     ];
   },
 

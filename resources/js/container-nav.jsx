@@ -18,16 +18,7 @@ export default React.createClass({
     if (!link) {
       return;
     }
-    const url = JsonApi.linkUrl(link);
-
-    JsonApi.xhr(
-      {url: url,
-       onload: (event) => {
-         Dispatch('paged', event.target.response);
-         Dispatch('link-activated', link);
-       }
-      }
-    );
+    Dispatch('page-requested', link);
   },
 
   pager: function(key) {
