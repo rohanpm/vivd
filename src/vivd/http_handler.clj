@@ -7,6 +7,7 @@
              [api :as api]
              [http :refer :all]]
             [vivd.api.containers :as api-containers]
+            [vivd.api.events :as api-events]
             [ring.util.response :refer :all]
             [clojure.tools.logging :as log]
             [clojure.java.io :as io]
@@ -105,6 +106,7 @@
                         (make-index-handler services)
                         (api/make-create-handler index)
                         (api-containers/make services)
+                        (api-events/make config services)
                         (make-proxy-handler config builder index)]]
     (fn [request]
       (let [response (first (keep #(% request) all-handlers))
