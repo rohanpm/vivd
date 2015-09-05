@@ -1,12 +1,13 @@
 import React       from 'react';
 import QueryString from 'query-string';
 
-import AppHistory   from './app/history';
-import AppFilter    from './app/filter';
-import Body         from './body';
-import Dispatch     from './dispatch';
-import * as JsonApi from './json-api';
-import * as Links   from './links';
+import AppHistory     from './app/history';
+import AppFilter      from './app/filter';
+import AppEventSource from './app/eventsource';
+import Body           from './body';
+import Dispatch       from './dispatch';
+import * as JsonApi   from './json-api';
+import * as Links     from './links';
 
 export default React.createClass({
 
@@ -15,37 +16,6 @@ export default React.createClass({
       title: "vivd",
       containers: {data: []}
     };
-  },
-
-  setupEventSource: function() {
-    var url;
-    try {
-      url = JsonApi.linkUrl(this.state.containers.links.events);
-    } catch (e) {}
-    if (!url) {
-      console.warn("Missing 'events' link");
-      return;
-    }
-
-    const source = new EventSource(url);
-    source.onmessage = e => Dispatch('sse', JSON.parse(e.data));
-  },
-
-  mergeContainer: function(c) {
-    const id = c.id;
-    const data = this.state.containers.data;
-
-    var anyUpdated = false;
-    for (let stateC of data) {
-      if (stateC.id === id) {
-        anyUpdated = true;
-        Object.assign(stateC, c);
-      }
-    }
-
-    if (anyUpdated) {
-      this.forceUpdate();
-    }
   },
 
   componentDidMount: function() {
@@ -61,11 +31,6 @@ export default React.createClass({
       this.setState({containers: obj});
     });
 
-    Dispatch.on('sse', o => {
-      if (o.type === "containers") {
-        this.mergeContainer(o);
-      }
-    });
 
     Dispatch.on('request-log', c => {
       this.setState({showingLog: c.id}, () => {
@@ -86,9 +51,8 @@ export default React.createClass({
     this.components = [
       new AppHistory(this),
       new AppFilter(this),
+      new AppEventSource(this),
     ];
-
-    this.setupEventSource();
   },
 
   render: function() {
