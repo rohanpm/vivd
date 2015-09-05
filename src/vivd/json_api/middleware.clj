@@ -4,6 +4,7 @@
             [clojure.string :as str]
             [clojure.java.io :as io]
             [schema.core :as s]
+            [vivd.json-api.links :refer [prefix-link-object prefix-link-val link-prefix]]
             vivd.json-api.schema))
 
 (def json-api-content-type "application/vnd.api+json")
@@ -163,25 +164,6 @@
         (log/debug "Exception" e)
         (response-for-exception e)))))
 
-(defn- link-prefix [{:keys [headers scheme server-port server-name]}]
-  (let [host (or (and headers (headers "host"))
-                 (str server-name ":" server-port))]
-    (str (name scheme) "://" host)))
-
-(defn- prefix-link-val [prefix val]
-  (log/debug "prefix-link-val" prefix val)
-  (cond
-   (nil? val)    nil
-   (string? val) (str prefix val)
-   :else         (merge val {:href 
-                             (prefix-link-val prefix (:href val))})))
-
-(defn- prefix-link-object [prefix object]
-  (log/debug "prefix" prefix object)
-  (let [prefixed-kvs (mapcat #(vector
-                               (first %)
-                               (prefix-link-val prefix (second %))) object)]
-    (apply hash-map prefixed-kvs)))
 
 (defn- update-in-if-exists [object ks f]
   (if (get-in object ks)
