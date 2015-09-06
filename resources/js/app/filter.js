@@ -7,14 +7,18 @@ export default class {
   constructor(app) {
     this.app = app;
 
-    this.applyFilter = debounce(this.applyFilter, 300);
+    this.debouncedApplyFilter = debounce(this.applyFilter, 300);
 
     Dispatch.on('filter-requested', this.filterRequested.bind(this));
   }
 
   filterRequested(str) {
     this.app.setState({inputFilter: str});
-    this.applyFilter(str);
+    if (str == '') {
+      this.applyFilter(str);
+    } else {
+      this.debouncedApplyFilter(str);
+    }
   }
 
   applyFilter(str) {
