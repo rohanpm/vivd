@@ -98,7 +98,7 @@
   (let [st (state services request)
         st (json/write-str st)]
     (str
-     (renderer/render renderer st)
+     (span (renderer/render renderer st))
      (set-state-tag st))))
 
 (defn from-index [{:keys [config index renderer] :as services} request]

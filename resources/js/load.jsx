@@ -10,7 +10,7 @@ if (inBrowser) {
   // (re-)render whatever state was passed by the server
   React.render(
     <App initialState={serverState}/>,
-    document.getElementsByTagName('body')[0]
+    document.getElementsByTagName('span')[0]
   );
 } else {
   // This is used for rendering the application, server-side.
