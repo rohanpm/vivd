@@ -7,3 +7,4 @@ bower_components/
 node_modules/
 resources/public/vendor/
 resources/public/js/app-bundle.js
+resources/public/css/app-bundle.css

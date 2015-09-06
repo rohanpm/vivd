@@ -14,19 +14,15 @@
   (link- {:rel "stylesheet"
           :href href}))
 
-(defn stylesheets []
-  (clj-map stylesheet ["public/vendor/bootstrap/css/bootstrap.min.css"
-                       "public/css/vivd.css"]))
-
 (defn javascript [src]
   (script {:type "text/javascript"
            :src  src}))
 
 (defn vivd-head [config]
-  (apply head
-         (title (:title config))
-         (meta {:charset "utf-8"})
-         (stylesheets)))
+  (head
+   (title (:title config))
+   (meta {:charset "utf-8"})
+   (stylesheet "public/css/app-bundle.css")))
 
 (defn- request-for-state [{:keys [config]} {:keys [params] :as request}]
   {:params

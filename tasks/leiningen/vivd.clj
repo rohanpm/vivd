@@ -11,6 +11,7 @@
 (def browserify "node_modules/.bin/browserify")
 (def watchify   "node_modules/.bin/watchify")
 (def uglify     "node_modules/.bin/uglify")
+(def cleancss   "node_modules/.bin/cleancss")
 (def app-bundle "resources/public/js/app-bundle.js")
 
 (def browserify-args ["resources/js/load.jsx"
@@ -64,6 +65,10 @@
     (if (not (= 0 exit))
       (throw (ex-info "external command failed" (merge result {:cmd cmd}))))))
 
+(defn run-cleancss [project]
+  (println "cleancss...")
+  (run! cleancss "resources/public/css/vivd.css" "-o" "resources/public/css/app-bundle.css"))
+
 (defn run-browserify [project]
   (println "browserify...")
   (apply run! browserify browserify-args))
@@ -102,13 +107,15 @@
   (doto project
     (do-external-deps)
     (copy-bower-deps)
+    (run-cleancss)
     (run-browserify)
     (run-uglify)))
 
 (defn- run-before-run [project & args]
   (doto project
     (do-external-deps)
-    (copy-bower-deps)))
+    (copy-bower-deps)
+    (run-cleancss)))
 
 (def in-hook #{})
 (defn- run-before [f before-f & args]
