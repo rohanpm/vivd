@@ -1,6 +1,7 @@
 .nrepl-port
 .lein-failures
 *~
+data/
 target/
 bower_components/
 node_modules/
