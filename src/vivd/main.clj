@@ -6,6 +6,7 @@
              [container :as container]
              services
              index]
+            vivd
             [immutant.web :as web]
             [ring.middleware.reload :as reload]
             [clojure.tools.logging :as log]
@@ -34,6 +35,7 @@
    :port http-port})
 
 (defn -main [& args]
+  (println "vivd" vivd/version)
   (let [config       (read-config)
         config       (merge (default-config) config)
         web-config   (make-web-config config)
