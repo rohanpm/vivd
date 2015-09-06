@@ -120,6 +120,9 @@ read-only in the API.
     The base URL of the application within the container, e.g. browse to this
     URL to access the application.
 
+  logs::
+    A Server-Sent Events endpoint to stream the logs of this container.
+
   first::
     Pagination: points to the first page. (Collection only).
 
@@ -128,6 +131,9 @@ read-only in the API.
 
   prev::
     Pagination: points to the previous page. (Collection only).
+
+  events::
+    A Server-Sent Events endpoint to stream container updates. (Collection only).
 
 All links are absolute.
 
@@ -240,3 +246,28 @@ Link objects may contain these keys under `meta`:
     If present, this link can also be assembled by starting with the URL
     of the current document and setting each query parameter according to
     the contents of this object.
+
+=== Server-Sent Events
+
+==== `/a/containers/:id/logs`
+
+Streams the log messages of a container.
+
+Will immediately produce the last N log lines from the container, for some value
+of N (which can't be overridden currently), and subsequently stream any new
+log lines.
+
+Each event is a single line of text, prefixed with an extended ISO8601 timestamp,
+as in the following example:
+
+    2015-09-02T10:11:17.1645067Z 172.17.42.1 - - [02/Sep/2015:10:11:17 +0000] "GET /code/? HTTP/1.1" 200 572
+
+==== `/a/events`
+
+Streams updated resources.
+
+Each event is an encoded JSON API document containing a single updated resource.
+
+(Although this endpoint currently only produces events for container resources,
+clients MUST not assume this.  Clients SHOULD check the "type" attribute to
+decide the type of an updated resource, and SHOULD ignore unknown types.)
