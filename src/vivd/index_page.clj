@@ -6,11 +6,10 @@
             [vivd.react.renderer :as renderer]
             [vivd.api.containers :as containers]
             [clojure.tools.logging :as log]
-            [clojure.data.json :as json]))
+            [clojure.data.json :as json]
+            vivd))
 
 (set! *warn-on-reflection* true)
-
-(def version (System/getProperty "vivd.version"))
 
 (defn stylesheet [href]
   (link- {:rel "stylesheet"
@@ -24,7 +23,7 @@
   (head
    (title (:title config))
    (meta {:charset "utf-8"})
-   (stylesheet (str "public/css/app-bundle-" version ".css"))))
+   (stylesheet (str "public/css/app-bundle-" vivd/version ".css"))))
 
 (defn- request-for-state [{:keys [config]} {:keys [params] :as request}]
   {:params
@@ -109,4 +108,4 @@
       (vivd-head config)
       (body
        (render-for-index services request)
-       (javascript (str "public/js/app-bundle-" version ".js")))))))
+       (javascript (str "public/js/app-bundle-" vivd/version ".js")))))))

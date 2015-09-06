@@ -1,14 +1,14 @@
 (ns vivd.react.renderer
   (:require [clojure.java.io :as io]
             [clojure.tools.logging :as log]
-            [clojure.data.json :as json])
+            [clojure.data.json :as json]
+            vivd)
   (:import [javax.script ScriptContext ScriptEngine ScriptEngineManager]))
 
 (set! *warn-on-reflection* true)
 
-(def version (System/getProperty "vivd.version"))
 (def server-js "js/server.js")
-(def bundle-js (str "public/js/app-bundle-" version ".js"))
+(def bundle-js (str "public/js/app-bundle-" vivd/version ".js"))
 
 (defn- get-rhino [^ScriptEngineManager mgr]
   (.getEngineByName mgr "rhino"))
