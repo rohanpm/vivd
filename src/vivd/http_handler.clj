@@ -5,7 +5,8 @@
              [index :as index]
              [index-page :as index-page]
              [api :as api]
-             [http :refer :all]]
+             [http :refer :all]
+             [resource-handler :as resource-handler]]
             [vivd.api.containers :as api-containers]
             [vivd.api.events :as api-events]
             [ring.util.response :refer :all]
@@ -74,27 +75,6 @@
   "Redirect requests which appear to accidentally escape the container"
   (partial redirect-handler* index))
 
-(defn guess-content-type [^String filename]
-  (cond
-   (.endsWith filename ".js")  "application/javascript; charset=utf-8"
-   (.endsWith filename ".css") "text/css; charset=utf-8"))
-
-(defn resource-handler* [{:keys [^String uri] :as request}]
-  (let [relative (.substring uri 1)]
-    (log/debug "looking for resource" relative)
-    (if-let [resource (io/resource relative)]
-      {:status 200
-       :headers (if-let [type (guess-content-type relative)]
-                  {"content-type" type}
-                  {})
-       :body (io/input-stream resource)}
-      {:status 404
-       :body "resource not found"})))
-
-(def resource-handler
-  (->> resource-handler*
-       (if-uri-starts-with "/public/")))
-
 (defn- wrap-query-params [handler]
   (fn [request]
     (let [new-request (ring.middleware.params/assoc-query-params request "UTF-8")]
@@ -102,7 +82,7 @@
 
 (defn make* [config {:keys [index builder] :as services}]
   (let [all-handlers   [(make-redirect-handler index)
-                        resource-handler
+                        (resource-handler/make)
                         (make-index-handler services)
                         (api/make-create-handler index)
                         (api-containers/make services)
