@@ -1,6 +1,7 @@
 import React    from 'react';
 
 import Dispatch        from './dispatch';
+import * as Links      from './links';
 import * as JsonApi    from './json-api';
 import ContainerSearch from './container-search';
 
@@ -28,30 +29,23 @@ export default React.createClass({
     };
   },
 
-  render: function() {
+  pagerButton: function({name, text, arrow}) {
     const links = this.links();
-    const pagers = [];
-
-    var prevElem = null;
-    var nextElem = null;
-
-    if (links.prev) {
-      prevElem = (
-        <a className="btn btn-default" href="#" onClick={this.pager('prev')}>
-          <span aria-hidden="true">&larr;</span>
-          Previous
+    const link = links[name];
+    if (link) {
+      return (
+        <a className="btn btn-default" href={Links.adjustUrlForLink(link)}
+           onClick={this.pager(name)}>
+          <span aria-hidden="true">{arrow}</span>
+          {text}
         </a>
       );
     }
+  },
 
-    if (links.next) {
-      nextElem = (
-        <a className="btn btn-default" href="#" onClick={this.pager('next')}>
-          Next
-          <span aria-hidden="true">&rarr;</span>
-        </a>
-      );
-    }
+  render: function() {
+    var prevElem = this.pagerButton({name: 'prev', text: 'Previous', arrow: '←'});
+    var nextElem = this.pagerButton({name: 'next', text: 'Next',     arrow: '→'});
     
     return (
       <div className="row container-nav">
