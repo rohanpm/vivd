@@ -6,8 +6,9 @@
 
 (set! *warn-on-reflection* true)
 
+(def version (System/getProperty "vivd.version"))
 (def server-js "js/server.js")
-(def bundle-js "public/js/app-bundle.js")
+(def bundle-js (str "public/js/app-bundle-" version ".js"))
 
 (defn- get-rhino [^ScriptEngineManager mgr]
   (.getEngineByName mgr "rhino"))

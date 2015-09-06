@@ -12,12 +12,15 @@
 (def watchify   "node_modules/.bin/watchify")
 (def uglify     "node_modules/.bin/uglify")
 (def cleancss   "node_modules/.bin/cleancss")
-(def app-bundle "resources/public/js/app-bundle.js")
 
-(def browserify-args ["resources/js/load.jsx"
-                      "-g" "babelify"
-                      "--extension" ".jsx"
-                      "--outfile" app-bundle])
+(defn app-bundle [{:keys [version]}]
+  (str "resources/public/js/app-bundle-" version ".js"))
+
+(defn browserify-args [project]
+  ["resources/js/load.jsx"
+   "-g" "babelify"
+   "--extension" ".jsx"
+   "--outfile" (app-bundle project)])
 
 (defn- resources-dir []
   (io/file "resources/public/vendor"))
@@ -65,17 +68,18 @@
     (if (not (= 0 exit))
       (throw (ex-info "external command failed" (merge result {:cmd cmd}))))))
 
-(defn run-cleancss [project]
+(defn run-cleancss [{:keys [version]}]
   (println "cleancss...")
-  (run! cleancss "resources/public/css/vivd.css" "-o" "resources/public/css/app-bundle.css"))
+  (run! cleancss "resources/public/css/vivd.css" "-o"
+        (str "resources/public/css/app-bundle-" version ".css")))
 
 (defn run-browserify [project]
   (println "browserify...")
-  (apply run! browserify browserify-args))
+  (apply run! browserify (browserify-args project)))
 
 (defn run-uglify [project]
   (println "uglify...")
-  (run! uglify "-s" app-bundle "-o" app-bundle))
+  (run! uglify "-s" (app-bundle project) "-o" (app-bundle project)))
 
 ; since watchify is async, wait a bit for it to write the bundle
 (defn wait-for-bundle [file]
@@ -85,12 +89,12 @@
       (Thread/sleep 1000)
       (recur file))))
 
-(defn with-watchify [f]
+(defn with-watchify [project f]
   (println "watchify...")
-  (let [bundle-file (io/file app-bundle)
+  (let [bundle-file (io/file (app-bundle project))
         _           (.delete bundle-file)
         proc        (-> (ProcessBuilder.
-                         (into-array (concat [watchify] browserify-args)))
+                         (into-array (concat [watchify] (browserify-args project))))
                         (.start))]
     (try
       (wait-for-bundle bundle-file)
@@ -131,12 +135,12 @@
 (defn- hook-deps [f & args]
   (apply run-before f do-external-deps args))
 
-(defn- hook-run [f & args]
+(defn- hook-run [f project & args]
   (let [bound-f (fn []
-                  (apply f args))
+                  (apply f project args))
         new-f   (fn [&_]
-                  (with-watchify bound-f))]
-   (apply run-before new-f run-before-run args)))
+                  (with-watchify project bound-f))]
+   (apply run-before new-f run-before-run project args)))
 
 (defn add-hooks []
   (robert.hooke/add-hook #'leiningen.uberjar/uberjar #'hook-uberjar)

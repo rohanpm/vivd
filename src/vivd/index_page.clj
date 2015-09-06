@@ -10,6 +10,8 @@
 
 (set! *warn-on-reflection* true)
 
+(def version (System/getProperty "vivd.version"))
+
 (defn stylesheet [href]
   (link- {:rel "stylesheet"
           :href href}))
@@ -22,7 +24,7 @@
   (head
    (title (:title config))
    (meta {:charset "utf-8"})
-   (stylesheet "public/css/app-bundle.css")))
+   (stylesheet (str "public/css/app-bundle-" version ".css"))))
 
 (defn- request-for-state [{:keys [config]} {:keys [params] :as request}]
   {:params
@@ -107,4 +109,4 @@
       (vivd-head config)
       (body
        (render-for-index services request)
-       (javascript "public/js/app-bundle.js"))))))
+       (javascript (str "public/js/app-bundle-" version ".js")))))))
