@@ -1,7 +1,8 @@
 import React from 'react';
 
-import GlyphIcon from './glyph-icon';
-import Dispatch  from './dispatch';
+import GlyphIcon  from './glyph-icon';
+import Dispatch   from './dispatch';
+import * as Links from './links';
 
 export default React.createClass({
   searchChanged: function(event) {
@@ -9,6 +10,7 @@ export default React.createClass({
   },
 
   clearSearch: function(event) {
+    event.preventDefault();
     Dispatch('filter-requested', '');
   },
 
@@ -26,8 +28,12 @@ export default React.createClass({
           (() => {
             if (this.props.filter) {
               return (
-                <span className="input-group-addon" style={{cursor: 'pointer'}} onClick={this.clearSearch}>
-                  <GlyphIcon icon-type="remove"/>
+                <span className="input-group-addon" style={{cursor: 'pointer'}}>
+                  <a href={Links.currentUrlWithParams({'filter[*]': null})}
+                     style={{color: '#555'}}
+                     onClick={this.clearSearch}>
+                    <GlyphIcon icon-type="remove"/>
+                  </a>
                 </span>
               );
             }
