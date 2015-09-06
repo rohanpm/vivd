@@ -1,5 +1,10 @@
 import QueryString from 'query-string';
 
+// These parameters can be deleted if set to these values.
+const deleteParams = {
+  'page[offset]': 0,
+};
+
 export function urlWithParams(url, params) {
   const split = url.split('?');
   const base = split[0];
@@ -8,7 +13,8 @@ export function urlWithParams(url, params) {
   const now = QueryString.parse(search);
   const updated = Object.assign({}, now);
   for (let key of Object.keys(params)) {
-    if (params[key] === null) {
+    const val = params[key];
+    if (val === null || (deleteParams.hasOwnProperty(key) && deleteParams[key] == val)) {
       delete updated[key];
     } else {
       updated[key] = params[key];
