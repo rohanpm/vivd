@@ -20,10 +20,12 @@ export default React.createClass({
         <span className="input-group-addon">
           <GlyphIcon icon-type="search"/>
         </span>
-        <input type="text" onChange={this.searchChanged} className="form-control"
-          value={this.props.filter}
-          autoComplete="off"
-          placeholder="Search..."/>
+        <form method="get" action="">
+          <input type="text" name="filter[*]" onChange={this.searchChanged} className="form-control"
+            value={this.props.filter}
+            autoComplete="off"
+            placeholder="Search..."/>
+        </form>
         {
           (() => {
             if (this.props.filter) {
