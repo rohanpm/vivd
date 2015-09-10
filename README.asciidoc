@@ -271,3 +271,8 @@ Each event is an encoded JSON API document containing a single updated resource.
 (Although this endpoint currently only produces events for container resources,
 clients MUST not assume this.  Clients SHOULD check the "type" attribute to
 decide the type of an updated resource, and SHOULD ignore unknown types.)
+
+== Additional Resources
+
+      - https://galaxy.ansible.com/list#/roles/5066[vivd ansible role] for easy deployment/configuration of vivd
+      - https://github.com/rohanpm/vivd/blob/master/misc/gerrit-vivd.user.js[gerrit-vivd greasemonkey script] adding links to vivd from Gerrit change screens
