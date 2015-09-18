@@ -1,4 +1,5 @@
 = vivd =
+:toc:
 
 vivd is a development/testing tool for web applications.
 
@@ -271,6 +272,35 @@ Each event is an encoded JSON API document containing a single updated resource.
 (Although this endpoint currently only produces events for container resources,
 clients MUST not assume this.  Clients SHOULD check the "type" attribute to
 decide the type of an updated resource, and SHOULD ignore unknown types.)
+
+== Development
+
+When developing patches for vivd, you will need Java and
+https://github.com/technomancy/leiningen[leiningen], then use the following
+commands:
+
+  `lein run`::
+    - run vivd from source tree
+
+    - must manually create a `data/config.clj` first
+
+    - most changes to .clj files will be applied immediately
+
+    - changes to .js / .jsx files will be applied immediately in the browser,
+      but not for server-side rendering
+
+  `lein midje`::
+    - run test suite once
+
+  `lein midje :autotest`::
+    - run test suite once, then on demand
+
+    - runs relevant tests automatically when .clj files are changed
+
+  `lein uberjar`::
+    - prepares the standalone vivd package
+
+    - run it from a clean checkout to ensure it doesn't contain unintended files
 
 == Additional Resources
 
