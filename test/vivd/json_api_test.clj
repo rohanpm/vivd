@@ -26,9 +26,10 @@
      (test-handler response {}))
   ([response request]
      (let [handler (wrap-handler response)
-           request (merge  {:scheme      :http
-                            :server-port 80
-                            :server-name "vivd.example.com"}
+           request (merge  {:scheme         :http
+                            :server-port    80
+                            :server-name    "vivd.example.com"
+                            :request-method :get}
                            request)
            out     (handler request)]
        (update out :body maybe-json-read-str))))
@@ -145,3 +146,9 @@
   (fact "is made absolute in Location"
     (test-handler {:body {:data []} :headers {"location" "/foo/bar"}})
     => (contains {:headers (contains {"location" "http://vivd.example.com:80/foo/bar"})})))
+
+(facts "CORS"
+  (fact "allows all Origin"
+    (test-handler {:status 200} {:headers {"origin" "http://example.com/"}})
+    => (contains {:status 200
+                  :headers (contains {"Access-Control-Allow-Origin" "http://example.com/"})})))

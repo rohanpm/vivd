@@ -4,6 +4,7 @@
             [clojure.string :as str]
             [clojure.java.io :as io]
             [schema.core :as s]
+            [ring.middleware.cors :refer [wrap-cors]]
             [vivd.json-api.links :refer [prefix-link-object prefix-link-val link-prefix]]
             vivd.json-api.schema))
 
@@ -202,5 +203,7 @@
          (wrap-request-accept)
          (wrap-exceptions)
          (wrap-absolute-links)
+         (wrap-cors :access-control-allow-origin #".*"
+                    :access-control-allow-methods [:get :put :post :patch :delete])
          (wrap-response-body)
          (wrap-response-content-type))))
