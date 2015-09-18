@@ -79,6 +79,26 @@ The requirements on the configured docker image and application include:
 
 - should accept HTTP requests within +:startup-timeout+ seconds after starting
 
+=== Suggestions ===
+
+Consider these suggestions for the best results when using vivd:
+
+- Configure a +:docker-entrypoint+ which only invokes a script within your git
+  source tree. This allows different versions of your project to use different
+  logic for starting the container without adjusting vivd configuration.
+
+- Make the start script remember whether the container has previously been
+  initialized (e.g. touch a file after initialization). Use this to skip any
+  slow initialization checks (such as database migrations), to improve startup
+  performance.
+
+- Ensure the output of any relevant services goes to the container's
+  stdout/stderr, so it will be visible to vivd's log viewer.
+
+- Beware of PID files and similar state. The container may be forcibly stopped
+  at any time, leaving these behind. This may break subsequent starts of the
+  container if not explicitly scripted for (e.g. remove PID files on startup).
+
 == API ==
 
 vivd's API follows the http://jsonapi.org/format/[JSON API] format, version 1.0.
