@@ -268,7 +268,12 @@
                 (and (not docker-container-id) (not (= status :building)))
                 :new
 
-                (and (running-status? status) (not (running? c)))
+                (and (running-status? status)
+                     (not (try
+                            (running? c)
+                            (catch Exception e
+                              (log/warn "Can't determine if" c "is running (assuming not)" e)
+                              false))))
                 :stopped
 
                 (= :starting status)
