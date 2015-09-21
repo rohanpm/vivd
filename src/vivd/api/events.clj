@@ -5,7 +5,7 @@
             [clojure.data.json :as json]
             [vivd.index :as index]
             [vivd.json-api.links :as links]
-            [vivd.api.containers :refer [container-resource]]))
+            [vivd.api.containers.common :refer [container-resource]]))
 
 (defn- get-events [event-channels {:keys [index]} request]
   (sse/as-channel request

@@ -43,6 +43,12 @@ function statusAttributes(status) {
       icon_type:   'stop',
     },
 
+    cleaning: {
+      button_type: 'warning',
+      text:        'Cleaning',
+      icon_type:   'trash',
+    },
+
     'timed-out': {
       button_type: 'danger',
       text:        'Timed Out',

@@ -1,6 +1,8 @@
 (ns vivd.api.containers
   (:require [vivd.api.schema :refer [ContainerResourceIn]]
+            [vivd.api.containers.common :refer :all]
             [vivd.api.containers.logs :refer [container-logs]]
+            [vivd.api.containers.clean :refer [clean-container]]
             [vivd.json-api.middleware :refer [wrap-json-api]]
             [vivd.json-api.utils :refer [extract-resource]]
             [vivd.index :as index]
@@ -13,31 +15,6 @@
 (def CHARS "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")
 (defn- generate-id []
   (apply str (map (fn [_] (rand-nth CHARS)) (range 8))))
-
-(defn- links-for-container [{:keys [config]} {:keys [id docker-container-id] :as container}]
-  (let [{:keys [default-url]} config]
-    {:self (str "/a/containers/" id)
-     :logs (if docker-container-id
-             ; cannot fetch logs until container is created
-             (str "/a/containers/" id "/logs"))
-     :app  (str "/" id default-url)}))
-
-(def iso8601-formatter
-  (clj-time.format/formatters :date-time))
-
-(defn- iso8601 [timestamp]
-  (clj-time.format/unparse iso8601-formatter timestamp))
-
-(defn- container-resource-attributes [{:keys [timestamp] :as container}]
-  (merge
-   (select-keys container [:status :git-ref :git-revision :git-oneline])
-   {:timestamp (iso8601 timestamp)}))
-
-(defn container-resource [services {:keys [id] :as container}]
-  {:id         id
-   :type       "containers"
-   :attributes (container-resource-attributes container)
-   :links      (links-for-container services container)})
 
 (defn- get-container [{:keys [index] :as services} request id]
   (if-let [val (index/get index id)]
@@ -191,7 +168,9 @@
       (GET "/a/containers" [:as r]
            (get-containers services r))
       (POST "/a/containers" [:as r]
-            (create-container services r)))))
+            (create-container services r))
+      (POST "/a/containers/:id/clean" [id :as r]
+            (clean-container services r id)))))
 
 (defn- other-handler [services]
    (fn [request]

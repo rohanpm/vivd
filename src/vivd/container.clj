@@ -68,10 +68,10 @@
 
 (defn- docker-rm [did]
   (docker-inspect-evict did)
-  (sh! (docker) "rm" "-v" did))
+  (sh! (docker) "rm" "-f" "-v" did))
 
 (defn- docker-rmi [image-id]
-  (sh! (docker) "rmi" image-id))
+  (sh! (docker) "rmi" "-f" image-id))
 
 (defn- port-key [{:keys [docker-http-port]}]
   (keyword (str docker-http-port "/tcp")))
@@ -116,6 +116,10 @@
 
 (defn stop [{:keys [docker-container-id] :as c}]
   (docker-stop docker-container-id))
+
+(defn clean [{:keys [docker-container-id docker-image-id] :as c}]
+  (docker-rm docker-container-id)
+  (docker-rmi docker-image-id))
 
 (defn remove [{:keys [docker-container-id] :as c}]
   (let [inspect  (docker-inspect docker-container-id)
