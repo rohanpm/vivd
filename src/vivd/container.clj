@@ -117,16 +117,14 @@
 (defn stop [{:keys [docker-container-id] :as c}]
   (docker-stop docker-container-id))
 
-(defn clean [{:keys [docker-container-id docker-image-id] :as c}]
-  (docker-rm docker-container-id)
-  (docker-rmi docker-image-id))
-
 (defn remove [{:keys [docker-container-id] :as c}]
   (let [inspect  (docker-inspect docker-container-id)
         image-id (:Image inspect)]
     (docker-rm docker-container-id)
+    (log/info "Removed container" docker-container-id)
     (try
       (docker-rmi image-id)
+      (log/info "Removed image" image-id)
       (catch Exception e
           ; tolerating rmi errors because the image can still be in use by
           ; another container.
