@@ -81,6 +81,12 @@ export default React.createClass({
     Dispatch('request-log', this.props.container);
   },
 
+  requestClean: function(evt) {
+    evt.preventDefault();
+    Dispatch('post-link', this.props.container.links.clean);
+    this.toggleOpen(false);
+  },
+
   menuItems: function() {
     const out = [];
     const links = this.props.container.links;
@@ -96,11 +102,24 @@ export default React.createClass({
       );
     }
 
+    if (links.clean) {
+      out.push(
+        <li key="clean">
+          <a onClick={this.requestClean} href="#">
+            Clean
+          </a>
+        </li>
+      );
+    }
+
     return out;
   },
 
-  toggleOpen: function() {
-    this.setState({open: !this.state.open});
+  toggleOpen: function(open) {
+    if (open === undefined) {
+      open = !this.state.open;
+    }
+    this.setState({open});
   },
 
   render: function() {

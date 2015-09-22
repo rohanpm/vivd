@@ -4,6 +4,7 @@ import AppHistory     from './app/history';
 import AppFilter      from './app/filter';
 import AppEventSource from './app/eventsource';
 import AppPager       from './app/pager';
+import AppLinks       from './app/links';
 import AppLogs        from './app/logs';
 import Body           from './body';
 
@@ -21,6 +22,7 @@ export default React.createClass({
       new AppFilter(this),
       new AppEventSource(this),
       new AppPager(this),
+      new AppLinks(this),
       new AppLogs(this),
     ];
   },
