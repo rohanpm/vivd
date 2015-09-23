@@ -25,6 +25,7 @@
                       [react "0.13.3"]
                       [uglify "0.1.5"]
                       [react-timeago "2.2.1"]
+                      [react-modal "0.5.0"]
                       [query-string "2.4.0"]
                       [clean-css "3.4.1"]]
   :hooks [leiningen.vivd/add-hooks]

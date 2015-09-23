@@ -4,6 +4,7 @@ import * as JsonApi from './json-api';
 import GlyphIcon    from './glyph-icon';
 import * as Links   from './links';
 import Dispatch     from './dispatch';
+import CleanLink    from './clean-link';
 
 function statusAttributes(status) {
   const statusMap = {
@@ -81,12 +82,6 @@ export default React.createClass({
     Dispatch('request-log', this.props.container);
   },
 
-  requestClean: function(evt) {
-    evt.preventDefault();
-    Dispatch('post-link', this.props.container.links.clean);
-    this.toggleOpen(false);
-  },
-
   menuItems: function() {
     const out = [];
     const links = this.props.container.links;
@@ -105,9 +100,7 @@ export default React.createClass({
     if (links.clean) {
       out.push(
         <li key="clean">
-          <a onClick={this.requestClean} href="#">
-            Clean
-          </a>
+          <CleanLink container={this.props.container} onClick={() => this.toggleOpen(false)}/>
         </li>
       );
     }
@@ -139,7 +132,7 @@ export default React.createClass({
             {attr.text}
           </span>
         </button>
-        <button type="button" className={btnClass + ' dropdown-toggle'} onClick={this.toggleOpen} data-toggle="dropdown">
+        <button type="button" className={btnClass + ' dropdown-toggle'} onClick={() => this.toggleOpen()} data-toggle="dropdown">
           <span className="caret"></span>
         </button>
         <ul className="dropdown-menu">
