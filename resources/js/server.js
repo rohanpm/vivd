@@ -7,6 +7,9 @@ window = {};
 // This is filled in elsewhere with info from the request
 location = {};
 
+// Some 3rdparty code unconditionally expects this to exist.
+document = {};
+
 console = {
   _jlog: java.util.logging.Logger.getLogger('app-bundle.js'),
   log: function() {

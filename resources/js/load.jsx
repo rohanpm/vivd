@@ -4,7 +4,9 @@ import React from 'react';
 
 import App   from './app';
 
-const inBrowser = (typeof(document) !== 'undefined');
+const inBrowser =
+     (typeof(document) !== 'undefined')
+  && (typeof(document.getElementsByTagName) !== 'undefined');
 
 if (inBrowser) {
   // (re-)render whatever state was passed by the server
