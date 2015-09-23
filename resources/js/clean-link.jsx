@@ -39,6 +39,7 @@ export default React.createClass({
   },
 
   clicked: function(evt) {
+    evt.preventDefault();
     if (this.props.onClick) {
       this.props.onClick(evt);
     }
