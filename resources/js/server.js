@@ -4,7 +4,7 @@
 // bundle.
 window = {};
 
-// TODO: fill in this with info from the request
+// This is filled in elsewhere with info from the request
 location = {};
 
 console = {
