@@ -119,6 +119,10 @@ export default React.createClass({
     const attr = this.uiAttrs();
     const btnClass = `btn btn-${attr.button_type}`;
     const topClass = "btn-group " + (this.state.open ? 'open' : '');
+    const menuItems = this.menuItems();
+    const disabled = (menuItems.length == 0);
+    const dropdownClass = btnClass + ' dropdown-toggle ' + (disabled ? 'disabled' : '');
+    const dropdownClicked = disabled ? null : () => this.toggleOpen();
 
     return (
       <div className={topClass}>
@@ -132,7 +136,7 @@ export default React.createClass({
             {attr.text}
           </span>
         </button>
-        <button type="button" className={btnClass + ' dropdown-toggle'} onClick={() => this.toggleOpen()} data-toggle="dropdown">
+        <button type="button" className={dropdownClass} onClick={dropdownClicked} data-toggle="dropdown">
           <span className="caret"></span>
         </button>
         <ul className="dropdown-menu">
