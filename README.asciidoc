@@ -141,6 +141,13 @@ read-only in the API.
     The base URL of the application within the container, e.g. browse to this
     URL to access the application.
 
+  clean::
+    Do an empty POST here to clean the container.
+    +
+    Cleaning a container means all of the data associated with the container
+    will be removed. The metadata (e.g. ID and git revision) is retained,
+    allowing the container to be rebuilt on next use.
+
   logs::
     A Server-Sent Events endpoint to stream the logs of this container.
 
