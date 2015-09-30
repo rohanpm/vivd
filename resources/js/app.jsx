@@ -12,7 +12,8 @@ export default React.createClass({
   getInitialState: function() {
     return this.props.initialState || {
       title: "vivd",
-      containers: {data: []}
+      containers: {data: []},
+      currentUrl: location.href,
     };
   },
 

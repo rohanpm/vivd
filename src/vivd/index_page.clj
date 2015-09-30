@@ -80,11 +80,13 @@
 
 (defn- state [{:keys [config index] :as services} {:keys [params] :as request}]
   (let [req            (request-for-state services request)
-        {:keys [body]} (containers/get-containers services req)]
+        {:keys [body]} (containers/get-containers services req)
+        location       (location-for-request request)]
     (merge
      {:title         (:title config)
       :containers    body
-      :_location     (location-for-request request)}
+      :_location     location
+      :currentUrl    (:href location)}
      (state-from-params params))))
 
 (defn- set-state-tag [state]

@@ -56,7 +56,7 @@ export default React.createClass({
           <TimeAgo date={c.attributes.timestamp} title={c.attributes.timestamp}/>
         </td>
         <td className="status">
-          <ContainerButton container={c}/>
+          <ContainerButton container={c} currentUrl={this.props.currentUrl}/>
         </td>
       </tr>
     );

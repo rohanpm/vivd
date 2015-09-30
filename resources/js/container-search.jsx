@@ -31,7 +31,7 @@ export default React.createClass({
             if (this.props.filter) {
               return (
                 <span className="input-group-addon" style={{cursor: 'pointer'}}>
-                  <a href={Links.currentUrlWithParams({'filter[*]': null})}
+                  <a href={Links.urlWithParams(this.props.currentUrl, {'filter[*]': null})}
                      style={{color: '#555'}}
                      onClick={this.clearSearch}>
                     <GlyphIcon icon-type="remove"/>

@@ -11,11 +11,9 @@ export default class {
   }
 
   setShowingLog(id) {
+    const newUrl = Links.urlWithParams(this.app.state.currentUrl, {log: id});
     this.app.setState({showingLog: id},
-                      () => history.pushState(
-                        this.app.state,
-                        '',
-                        Links.currentUrlWithParams({log: id})));
+                      () => Dispatch('url-activated', newUrl));
   }
 
   requestLog(c) {
@@ -27,10 +25,8 @@ export default class {
   }
 
   showLogTimestamps(showingLogTimestamps) {
+    const newUrl = Links.urlWithParams(this.app.state.currentUrl, {logTimestamp: showingLogTimestamps ? 1 : null});
     this.app.setState({showingLogTimestamps},
-                      () => history.replaceState(
-                        this.app.state,
-                        '',
-                        Links.currentUrlWithParams({logTimestamp: showingLogTimestamps ? 1 : null})));
+                      () => Dispatch('url-activated', newUrl));
   }
 }

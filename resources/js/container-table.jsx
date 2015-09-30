@@ -10,7 +10,10 @@ export default React.createClass({
   },
 
   containerRows: function() {
-    return this.props.containers.data.map((c) => <ContainerRow highlight={this.props.highlight} key={c.id} container={c}/>);
+    return this.props.containers.data.map((c) => <ContainerRow currentUrl={this.props.currentUrl}
+                                                               highlight={this.props.highlight}
+                                                               key={c.id}
+                                                               container={c}/>);
   },
 
   render: function() {

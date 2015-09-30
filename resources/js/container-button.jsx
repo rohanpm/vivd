@@ -69,6 +69,10 @@ function statusAttributes(status) {
 }
 
 export default React.createClass({
+  updatedUrl: function(params) {
+    return Links.urlWithParams(this.props.currentUrl, params);
+  },
+
   getInitialState: function() {
     return {open: false};
   },
@@ -89,7 +93,7 @@ export default React.createClass({
     if (links.logs) {
       out.push(
         <li key="logs">
-          <a href={Links.currentUrlWithParams({log: this.props.container.id})}
+          <a href={this.updatedUrl({log: this.props.container.id})}
             onClick={this.requestLogs}>
             Logs
           </a>

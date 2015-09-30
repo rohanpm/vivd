@@ -54,7 +54,7 @@ export default React.createClass({
             </div>
             <div className="col-md-6"/>
             <div className="col-md-1">
-              <a href={Links.currentUrlWithParams({log: null})} className="pull-right" onClick={this.close}>
+              <a href={Links.urlWithParams(this.props.currentUrl, {log: null})} className="pull-right" onClick={this.close}>
                 <GlyphIcon icon-type="remove"/>
               </a>
             </div>

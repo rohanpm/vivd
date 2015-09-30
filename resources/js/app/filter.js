@@ -27,12 +27,12 @@ export default class {
 
     // NOTE: requires index and API to have compatible params
     const apiUrl = Links.urlWithParams('/a/containers' + location.search, params);
-    const uiUrl  = Links.currentUrlWithParams(params);
+    const uiUrl  = Links.urlWithParams(this.app.state.currentUrl, params);
     const onload = (event) => {
       this.app.setState(
         {appliedFilter: str,
          containers: event.target.response},
-        () => history.pushState(this.app.state, "", uiUrl)
+        () => Dispatch('url-activated', uiUrl)
       );
     };
 

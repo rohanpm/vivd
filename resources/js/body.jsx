@@ -15,7 +15,8 @@ export default React.createClass({
   renderShowingLog: function() {
     return (
       <div className="container-fluid">
-        <ContainerLogs containerId={this.props.showingLog} showTimestamp={this.props.showingLogTimestamps}/>
+        <ContainerLogs currentUrl={this.props.currentUrl}
+          containerId={this.props.showingLog} showTimestamp={this.props.showingLogTimestamps}/>
       </div>
     );
   },
@@ -26,8 +27,10 @@ export default React.createClass({
         <h1 className="text-center">
           {this.props.title}
         </h1>
-        <ContainerNav containers={this.props.containers} filter={this.props.inputFilter}/>
-        <ContainerTable containers={this.props.containers} highlight={this.props.appliedFilter}/>
+        <ContainerNav currentUrl={this.props.currentUrl} containers={this.props.containers}
+                      filter={this.props.inputFilter}/>
+        <ContainerTable currentUrl={this.props.currentUrl} containers={this.props.containers}
+                        highlight={this.props.appliedFilter}/>
       </div>
     );
   }

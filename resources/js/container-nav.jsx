@@ -34,7 +34,7 @@ export default React.createClass({
     const link = links[name];
     if (link) {
       return (
-        <a className="btn btn-default" href={Links.adjustUrlForLink(link)}
+        <a className="btn btn-default" href={Links.adjustUrlForLink(this.props.currentUrl, link)}
            onClick={this.pager(name)}>
           <span aria-hidden="true">{arrow}</span>
           {text}
@@ -54,7 +54,7 @@ export default React.createClass({
         </div>
         <div className="col-md-1"/>
         <div className="col-md-6">
-          <ContainerSearch filter={this.props.filter}/>
+          <ContainerSearch currentUrl={this.props.currentUrl} filter={this.props.filter}/>
         </div>
         <div className="col-md-1"/>
         <div className="col-md-2 pull-right">

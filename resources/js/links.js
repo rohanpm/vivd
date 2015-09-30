@@ -24,11 +24,7 @@ export function urlWithParams(url, params) {
   return `${base}?${QueryString.stringify(updated)}`;
 }
 
-export function currentUrlWithParams(params) {
-  return urlWithParams(location.href, params);
-}
-
-export function adjustUrlForLink(link) {
+export function adjustUrlForLink(url, link) {
   const meta = link.meta;
   if (!meta) {
     return null;
@@ -39,5 +35,5 @@ export function adjustUrlForLink(link) {
     return null;
   }
 
-  return currentUrlWithParams(query_params);
+  return urlWithParams(url, query_params);
 }
