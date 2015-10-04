@@ -22,6 +22,23 @@ export default React.createClass({
     return this.props.showTimestamp ? this.state.timestampedLogText : this.state.notTimestampedLogText;
   },
 
+  getLogElem: function() {
+    const text = this.getLogText();
+    if (text == '') {
+      return (
+        <em>
+          (Waiting for logs...)
+        </em>
+      );
+    } else {
+      return (
+        <pre>
+          {text}
+        </pre>
+      );
+    }
+  },
+
   addLogText: function(msg) {
     const firstSpace = msg.indexOf(' ');
     const msgWithoutTimestamp = msg.substring(firstSpace + 1);
@@ -61,9 +78,7 @@ export default React.createClass({
           </div>
         </div>
         <div className="panel-body">
-          <pre>
-            {this.getLogText()}
-          </pre>
+          {this.getLogElem()}
         </div>
       </div>
     );
