@@ -1,6 +1,8 @@
 (ns vivd.reaper
   (:require [clojure.core.async :refer [thread]]
             [clojure.tools.logging :as log]
+            [vivd.api.containers.common :refer [can-clean?]]
+            [vivd.api.containers.clean :refer [do-clean-container]]
             [vivd
              [index :as index]
              [container :as container]]))
@@ -36,6 +38,11 @@
       (catch Exception e
         (log/warn "Problem removing:" id e)))))
 
+(defn- clean-containers [config index containers]
+  (doseq [{:keys [id] :as c} containers]
+    (do-clean-container {:index index :config config} c)
+    (log/info "Reaper cleaned" id)))
+
 (defn- reap-running [{:keys [max-containers-up]} index]
   {:pre [max-containers-up]}
   (let [containers (index/vals index)
@@ -51,6 +58,14 @@
         to-stop    (take stop-count (reverse running))]
     (stop-containers index to-stop)))
 
+(defn- reap-built [{:keys [max-containers-built] :as config} index]
+  (let [containers (->> (index/vals index)
+                        (remove try-container-running?)
+                        (by-timestamp-descending)
+                        (filter can-clean?)
+                        (drop max-containers-built))]
+    (clean-containers config index containers)))
+
 (defn- reap-stopped [{:keys [max-containers]} index]
   (let [containers (index/vals index)
         stopped    (remove try-container-running? containers)
@@ -61,6 +76,7 @@
 (defn- do-reap [config index]
   (log/debug "Reaping...")
   (reap-running config index)
+  (reap-built config index)
   (reap-stopped config index))
 
 (defn- run [config index]

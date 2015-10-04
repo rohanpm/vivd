@@ -33,7 +33,12 @@ example:
   :default-url "/app",
 
   ; max number of containers allowed to exist
-  :max-containers 200,
+  ; (metadata-only, very lightweight)
+  :max-containers 2000,
+
+  ; max number of containers allowed to be built
+  ; (container image and data)
+  :max-containers-built 200,
 
   ; max number of containers allowed to be running
   :max-containers-up 4,

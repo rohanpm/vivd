@@ -17,7 +17,8 @@
 
 (defn- default-config []
   {:startup-timeout   120,
-   :max-containers    100,
+   :max-containers    10000,
+   :max-containers-built 100,
    :max-containers-up 4,
    :per-page          20,
    :title             "Containers",

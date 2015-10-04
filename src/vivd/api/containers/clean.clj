@@ -5,7 +5,7 @@
             [clojure.core.async :refer [thread]]
             [clojure.tools.logging :as log]))
 
-(defn- do-clean-container [{:keys [index config]} {:keys [id] :as c}]
+(defn do-clean-container [{:keys [index config]} {:keys [id] :as c}]
   (let [updated-c (-> c
                       (dissoc :docker-image-id :docker-container-id)
                       (merge {:status :cleaning}))
