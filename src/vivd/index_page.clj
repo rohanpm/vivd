@@ -51,12 +51,22 @@
 (defn state-from-params [params]
   (reduce (partial state-from-params* params) {} state-params))
 
-(defn location-for-request [{:keys [server-port server-name uri query-string scheme]
-                             :or   {server-port  80
-                                    server-name  "localhost"
-                                    uri          "/"
-                                    query-string nil
-                                    scheme       :http}}]
+(defn- request-keys-from-header [{:keys [headers]
+                                  :or   {headers {}}}]
+  (if-let [host (headers "host")]
+    (let [[server-name server-port] (clojure.string/split host #":" 2)
+          server-port (or server-port "80")
+          server-port (Integer/valueOf ^String server-port)]
+      {:server-port server-port
+       :server-name server-name})
+    {}))
+
+(defn location-from-request [{:keys [server-port server-name uri query-string scheme]
+                              :or   {server-port  80
+                                     server-name  "localhost"
+                                     uri          "/"
+                                     query-string nil
+                                     scheme       :http}}]
   (let [host (str server-name
                   (if (= server-port 80)
                     ""
@@ -77,6 +87,9 @@
      :username nil
      :password nil
      :origin   origin}))
+
+(defn- location-for-request [request]
+  (location-from-request (merge request (request-keys-from-header request))))
 
 (defn- state [{:keys [config index] :as services} {:keys [params] :as request}]
   (let [req            (request-for-state services request)
