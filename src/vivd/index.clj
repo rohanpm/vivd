@@ -21,16 +21,22 @@
     (ensure-directory-exists out)
     out))
 
+(defn- load-from-stream [stream]
+  (-> (edn/read stream)
+      (clojure.core/update :timestamp
+                           #(if % (time-coerce/from-string %)))))
+
 (defn- load-info [id]
   (log/debug "Reading info for:" id)
-  (let [file (io/file (container-dir) id)]
+  (let [file     (io/file (container-dir) id)
+        defaults {:id        id
+                  :timestamp (-> file
+                                 (.lastModified)
+                                 (time-coerce/from-long))}]
     (with-open [stream (reader-for-file file)]
       (merge
-       (edn/read stream)
-       {:id        id
-        :timestamp (-> file
-                       (.lastModified)
-                       (time-coerce/from-long))}))))
+       defaults
+       (load-from-stream stream)))))
 
 (defn- try-load-info [id]
   (try
