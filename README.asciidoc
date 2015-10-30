@@ -13,12 +13,19 @@ system.
 == Configuration ==
 
 +data/config.clj+ should contain configuration items as in the following
-example:
+example.  Each option marked as [overridable] is permitted to be overridden
+from within the tested source, using the +src-config+ option.
 
 ..............................................................
 {
+  ; the path of an additional configuration file within the tested source,
+  ; to override a subset of the following options (for example, to use a
+  ; different docker image on different git branches)
+  :src-config "misc/vivd/config.clj",
+  
   ; time (in seconds) permitted for HTTP to become responsive
   ; on new containers
+  ; [overridable]
   :startup-timeout 60,
 
   ; header/title displayed on the index page
@@ -30,6 +37,7 @@ example:
 
   ; default URL within container to link to from index page
   ; (e.g., if there is something more useful than "/")
+  ; [overridable]
   :default-url "/app",
 
   ; max number of containers allowed to exist
@@ -47,21 +55,26 @@ example:
   :git-url "https://github.com/docker-training/webapp.git",
   
   ; the source image used
+  ; [overridable]
   :docker-source-image "httpd:2.4",
   
   ; http port within the container
+  ; [overridable]
   :docker-http-port 80,
   
   ; location within the container where code shall be placed
+  ; [overridable]
   :docker-code-path "/usr/local/apache2/htdocs/code",
 
   ; ENTRYPOINT and CMD used for built images; can be omitted.
   ; Array form only.
+  ; [overridable]
   :docker-entrypoint ["/usr/local/apache2/bin/httpd"],
   :docker-cmd ["-DFOREGROUND"],
 
   ; Additional arguments passed to `docker run' when starting a container.
   ; Useful for adding volumes or running in privileged mode
+  ; [overridable]
   :docker-run-arguments ["--privileged"],
 
   ; HTTP server configuration

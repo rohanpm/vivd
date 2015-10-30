@@ -1,13 +1,22 @@
 (ns vivd.utils
   (:require [clojure.java.io :as io]
             [clojure.java.shell :refer [sh]]
-            [clojure.tools.logging :as log])
+            [clojure.tools.logging :as log]
+            [clojure.edn :as edn])
   (:import org.apache.commons.io.FileUtils))
+
+(defn get-config [global-config container-config key]
+  (or (get-in container-config [:config key])
+      (global-config key)))
 
 (defn reader-for-file ^java.io.PushbackReader [& args]
   (->  (apply io/file args)
        (io/reader)
        (java.io.PushbackReader.)))
+
+(defn read-edn [& args]
+  (with-open [cfg (apply reader-for-file args)]
+    (edn/read cfg)))
 
 (defn sh! [cmd & args]
   (log/debug "sh:" cmd args)

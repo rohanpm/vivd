@@ -5,7 +5,8 @@
             [clojure.tools.logging :as log]
             [vivd
              [container :as container]
-             [index :as index]]))
+             [index :as index]
+             [utils :refer :all]]))
 
 (set! *warn-on-reflection* true)
 
@@ -48,7 +49,7 @@
         (fn []
           (let [started (container/started-time c)
                 _       (log/debug "container started at " started)
-                timeout (:startup-timeout config)
+                timeout (get-config config c :startup-timeout)
                 timeout (time/seconds timeout)
                 deadline (time/plus- started timeout)
                 _       (log/debug "deadline" deadline)

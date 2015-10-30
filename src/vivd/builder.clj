@@ -28,12 +28,16 @@
     (.write stream (str directive " " (json/write-str value) "\n"))))
 
 (defn- setup-dockerfile [config dirf c]
-  (let [dest (io/file dirf "Dockerfile")]
+  (let [dest (io/file dirf "Dockerfile")
+        img  (get-config config c :docker-source-image)
+        code (get-config config c :docker-code-path)
+        cmd  (get-config config c :docker-cmd)
+        ep   (get-config config c :docker-entrypoint)]
     (with-open [o (io/writer dest)]
-      (.write o (str "FROM " (:docker-source-image config) "\n"))
-      (.write o (str "ADD code/ " (:docker-code-path config) "\n"))
-      (write-json-directive o "CMD" (:docker-cmd config))
-      (write-json-directive o "ENTRYPOINT" (:docker-entrypoint config)))))
+      (.write o (str "FROM " img "\n"))
+      (.write o (str "ADD code/ " code "\n"))
+      (write-json-directive o "CMD" cmd)
+      (write-json-directive o "ENTRYPOINT" ep))))
 
 (defn- docker-build [dirf]
   ; this is pretty dumb, but "docker build" doesn't seem to have any
@@ -47,6 +51,28 @@
     (log/debug "docker build - " result)
     built))
 
+(defn- keep-if-exists [file]
+  (if (.exists file)
+    file))
+
+(defn- config-from-src [{:keys [src-config]} dirf]
+  (if src-config
+    (if-let [file (-> (io/file dirf "code" src-config)
+                      (keep-if-exists))]
+      (try
+        (-> file
+            (read-edn)
+            (select-keys [:startup-timeout
+                          :default-url
+                          :docker-source-image
+                          :docker-http-port
+                          :docker-code-path
+                          :docker-entrypoint
+                          :docker-cmd
+                          :docker-run-arguments]))
+        (catch Exception e
+          (log/warn "Could not read" file ", ignoring." e))))))
+
 (defn- do-build* [config index out {:keys [id git-revision] :as c}]
   (try
     (log/debug "Will build:" c)
@@ -56,13 +82,20 @@
       (FileUtils/forceDelete dirf)
       (FileUtils/forceMkdir dirf)
       (setup-src dirf c)
-      (setup-dockerfile config dirf c)
-      (let [new-image (docker-build dirf)
-            new-c     (merge c {:status          :built
-                                :docker-image-id new-image})]
-        (log/info "Built image" new-image "for" git-revision)
-        (index/update index new-c)
-        (>!! out new-c)))
+      (let [c-config (config-from-src config dirf)
+            new-c    (if c-config
+                       (merge c {:config c-config})
+                       c)]
+        (log/debug "container after config:" new-c)
+        (setup-dockerfile config dirf new-c)
+        (let [new-image (docker-build dirf)            
+              new-c     (merge new-c
+                               {:status          :built
+                                :docker-image-id new-image}
+                               (config-from-src config dirf))]
+          (log/info "Built image" new-image "for" git-revision)
+          (index/update index new-c)
+          (>!! out new-c))))
     (finally (close! out))))
 
 (defn do-build [config index out {:keys [id git-revision] :as c}]

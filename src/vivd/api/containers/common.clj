@@ -1,11 +1,12 @@
-(ns vivd.api.containers.common)
+(ns vivd.api.containers.common
+  (:require [vivd.utils :refer :all]))
 
 (defn can-clean? [{:keys [docker-image-id]}]
   ; anything with a built image can be cleaned
   docker-image-id)
 
 (defn- links-for-container [{:keys [config]} {:keys [id docker-container-id] :as container}]
-  (let [{:keys [default-url]} config
+  (let [default-url           (get-config config container :default-url)
         self                  (str "/a/containers/" id)]
     {:self self
      :logs (if docker-container-id

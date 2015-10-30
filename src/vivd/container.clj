@@ -73,23 +73,27 @@
 (defn- docker-rmi [image-id]
   (sh! (docker) "rmi" "-f" image-id))
 
-(defn- port-key [{:keys [docker-http-port]}]
-  (keyword (str docker-http-port "/tcp")))
+(defn- port-key [port]
+  (keyword (str port "/tcp")))
 
-(defn wait-for-network [config did]
-  (loop [attempt 0
-         inspect (docker-inspect did)]
-    (if (get-in inspect [:NetworkSettings :Ports (port-key config) 0 :HostPort])
-      inspect
-      (if (> attempt 4)
-        (throw (ex-info (str "HTTP port was not bound in container") {:docker-container-id did}))
-        (do
-          (Thread/sleep 200)
-          (docker-inspect-evict did)
-          (recur (inc attempt) (docker-inspect did)))))))
+(defn- wait-for-network [config {:keys [docker-container-id] :as c}]
+  (let [port (get-config config c :docker-http-port)
+        did  docker-container-id]
+    (loop [attempt 0
+           inspect (docker-inspect did)]
+      (if (get-in inspect [:NetworkSettings :Ports (port-key port) 0 :HostPort])
+        inspect
+        (if (> attempt 4)
+          (throw (ex-info (str "HTTP port was not bound in container") {:docker-container-id did}))
+          (do
+            (Thread/sleep 200)
+            (docker-inspect-evict did)
+            (recur (inc attempt) (docker-inspect did))))))))
 
-(defn create-container [{:keys [docker-http-port docker-run-arguments] :as config} {:keys [docker-image-id] :as c}]
-  (let [cmd          (concat ["docker" "run" "-d" "-p" (str "127.0.0.1::" docker-http-port)]
+(defn create-container [config {:keys [docker-image-id] :as c}]
+  (let [docker-http-port     (get-config config c :docker-http-port)
+        docker-run-arguments (get-config config c :docker-run-arguments)
+        cmd          (concat ["docker" "run" "-d" "-p" (str "127.0.0.1::" docker-http-port)]
                              docker-run-arguments
                              [docker-image-id])
         container-id (-> (apply sh! cmd)
@@ -215,8 +219,9 @@
             (extended-git-info c)))))
 
 (defn get-host-port [config {:keys [docker-container-id] :as c}]
-  (let [inspect      (docker-inspect docker-container-id)
-        cfg          (get-in inspect [:NetworkSettings :Ports (port-key config) 0])
+  (let [cfg-port     (get-config config c :docker-http-port)
+        inspect      (docker-inspect docker-container-id)
+        cfg          (get-in inspect [:NetworkSettings :Ports (port-key cfg-port) 0])
         ip           (:HostIp cfg)
         ^String port (:HostPort cfg)]
     [ip
@@ -227,37 +232,40 @@
         timestr (get-in inspect [:State :StartedAt])]
     (clj-time.format/parse timestr)))
 
-(defn- starting-container-overdue? [{:keys [startup-timeout] :as config} {:keys [timestamp] :as c}]
-  (let [now      (time/now)
-        how-long (time/interval timestamp now)
-        timeout  (* 4 startup-timeout)
-        secs     (time/in-seconds how-long)]
+(defn- starting-container-overdue? [config {:keys [timestamp] :as c}]
+  (let [startup-timeout (get-config config c :startup-timeout)
+        now             (time/now)
+        how-long        (time/interval timestamp now)
+        timeout         (* 4 startup-timeout)
+        secs            (time/in-seconds how-long)]
     (< timeout secs)))
 
-(defn- test-starting-container [{:keys [default-url startup-timeout] :as config} {:keys [timestamp] :as c}]
-  (log/debug "Checking starting container" c)
-  ; If the container is far beyond the timeout, don't even try...
-  (if (starting-container-overdue? config c)
-    (do
-      (log/debug "Container is overdue: " c)
-      :timed-out)
-    (let [[ip port] (get-host-port config c)
-          request   {:uri              default-url
-                     :scheme           :http
-                     :throw-exceptions true
-                     :server-name      ip
-                     :server-port      port
-                     :follow-redirects false
-                     :request-method   :get
-                     :conn-timeout     10000
-                     :socket-timeout   10000}]
-      (try
-        (http/request request)
-        (log/debug "Successfully contacted container" c)
-        :up
-        (catch Exception e
-          (log/debug "Container not (yet?) accessible" c e)        
-          :starting)))))
+(defn- test-starting-container [config {:keys [timestamp] :as c}]
+  (let [default-url     (get-config config c :default-url)
+        startup-timeout (get-config config c :startup-timeout)]
+    (log/debug "Checking starting container" c)
+    ; If the container is far beyond the timeout, don't even try...
+    (if (starting-container-overdue? config c)
+      (do
+        (log/debug "Container is overdue: " c)
+        :timed-out)
+      (let [[ip port] (get-host-port config c)
+            request   {:uri              default-url
+                       :scheme           :http
+                       :throw-exceptions true
+                       :server-name      ip
+                       :server-port      port
+                       :follow-redirects false
+                       :request-method   :get
+                       :conn-timeout     10000
+                       :socket-timeout   10000}]
+        (try
+          (http/request request)
+          (log/debug "Successfully contacted container" c)
+          :up
+          (catch Exception e
+            (log/debug "Container not (yet?) accessible" c e)        
+            :starting))))))
 
 (defn- running-status? [status]
   (some #(= status %) [:up :starting]))

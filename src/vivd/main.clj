@@ -10,7 +10,6 @@
             [immutant.web :as web]
             [ring.middleware.reload :as reload]
             [clojure.tools.logging :as log]
-            [clojure.edn :as edn]
             [clojure.java.io :as io]))
 
 (set! *warn-on-reflection* true)
@@ -28,8 +27,7 @@
    :http-host         "0.0.0.0"})
 
 (defn- read-config []
-  (with-open [cfg (reader-for-file "data/config.clj")]
-    (edn/read cfg)))
+  (read-edn "data/config.clj"))
 
 (defn- make-web-config [{:keys [http-port http-host]}]
   {:host http-host
