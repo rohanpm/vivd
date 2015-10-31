@@ -115,7 +115,7 @@
       (do
         (log/info "Starting:" docker-container-id)
         (docker-start docker-container-id)))
-    (wait-for-network config docker-container-id)
+    (wait-for-network config c)
     c))
 
 (defn stop [{:keys [docker-container-id] :as c}]
