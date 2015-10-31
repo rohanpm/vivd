@@ -42,7 +42,7 @@
 (defn- docker-build [dirf]
   ; this is pretty dumb, but "docker build" doesn't seem to have any
   ; way to print the generated image ID in a machine-readable format
-  (let [tag    "__vivd_tmp_build"
+  (let [tag    "vivd_tmp_build"
         _      (sh! "docker" "build" "-t" tag "-q" (str dirf))
         result (sh! "docker" "images" "-q" tag)
         built  (-> result
