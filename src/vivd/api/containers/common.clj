@@ -24,7 +24,7 @@
 
 (defn- container-resource-attributes [{:keys [timestamp] :as container}]
   (merge
-   (select-keys container [:status :git-ref :git-revision :git-oneline])
+   (select-keys container [:status :git-ref :git-revision :git-oneline :git-log])
    {:timestamp (iso8601 timestamp)}))
 
 (defn container-resource [services {:keys [id] :as container}]
