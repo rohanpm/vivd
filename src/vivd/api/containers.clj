@@ -90,7 +90,7 @@
 (defn- container-matches? [needle container]
   (some #(if-let [val (% container)]
            (.contains (.toLowerCase val) needle))
-        [:id :git-ref :git-revision :git-oneline]))
+        [:id :git-ref :git-revision :git-oneline :git-log]))
 
 (defn- apply-filter [vals {:keys [params] :as request}]
   (if-let [needle (params "filter[*]")]
