@@ -64,13 +64,13 @@ td.git .closed .git-commit-text {
 }
 
 td.git .closed .git-revision {
-  max-width:     4.5em;
+  max-width:     5.5em;
   overflow:      hidden;
-  text-overflow: "";
+  text-overflow: ellipsis;
 }
 
 td.git .closed .git-subject-brief {
-  transform: translateX(4.5em);
+  transform: translateX(5.5em);
 }
 
 td.git .closed .git-author-line,
