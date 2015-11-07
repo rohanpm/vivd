@@ -48,7 +48,27 @@ Date:   Wed Nov 4 19:47:57 2015 +1000
 
 export default React.createClass({
   getInitialState: function() {
-    return {open: false};
+    const c = this.props.container;
+    const parsed = parseGitLog(c.attributes['git-log']);
+    return {parsedGitLog: parsed,
+            open:         parsed ? this.calculateOpen(parsed) : false};
+  },
+
+  calculateOpen: function({sha1, subjectBrief, authorLine, dateLine, subjectRest}) {
+    const h = this.props.highlight;
+    if (!h) {
+      return false;
+    }
+
+    const hl = h.toLowerCase();
+
+    if (sha1.includes(hl) || subjectBrief.toLowerCase().includes(hl)) {
+      return false;
+    }
+
+    return (authorLine.toLowerCase().includes(hl) ||
+            dateLine.toLowerCase().includes(hl) ||
+            subjectRest.toLowerCase().includes(hl));
   },
 
   toggle: function() {
@@ -114,7 +134,7 @@ export default React.createClass({
   gitElement: function(params) {
     const {'git-ref': ref, 'git-revision': rev, 'git-oneline': oneline, 'git-log': log} = params;
     console.log(log);
-    const parsed = parseGitLog(log);
+    const parsed = this.state.parsedGitLog;
     if (parsed) {
       return this.gitElementFromParsed(params, parsed);
     }
