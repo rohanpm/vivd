@@ -19,3 +19,116 @@ td.status     { width: 14%; }
 td.status .btn-group .btn:first-child {
   width: 110px;
 }
+
+td.git .git-toggler {
+  cursor: pointer;
+}
+
+/********************************************************************
+ ****  Git log positioning
+ *******************************************************************/
+
+td.git .git-commit-text {
+  position: absolute;
+  transition: max-width: 0.6s;
+}
+
+td.git .git-revision {
+  transition: max-width 0.6s, transform 0.6s;
+  position: absolute;
+  z-index: 5;
+}
+
+td.git .git-subject-brief {
+  transition: transform 0.6s;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow-x: hidden;
+  max-width: 45em;
+}
+
+td.git .git-author-line,
+td.git .git-date-line {
+  transition: max-height 0.6s;
+}
+
+td.git .git-subject-rest {
+  margin-top: 3.2em;
+  transform: translateX(2em);
+  transition: margin-top 0.6s, max-height 0.6s;
+  overflow: hidden;
+}
+
+td.git .closed .git-commit-text {
+  max-width: 0;
+}
+
+td.git .closed .git-revision {
+  max-width:     4.5em;
+  overflow:      hidden;
+  text-overflow: "";
+}
+
+td.git .closed .git-subject-brief {
+  transform: translateX(4.5em);
+}
+
+td.git .closed .git-author-line,
+td.git .closed .git-date-line {
+  max-height: 0em;
+  overflow: hidden;
+}
+
+td.git .closed .git-subject-rest {
+  max-height: 0px;
+  margin-top: 0px;
+}
+
+td.git .open .git-commit-text {
+  max-width: 5em;
+}
+
+td.git .open .git-revision {
+  overflow:      hidden;
+  max-width:     40em;
+  transform: translateX(4em);
+}
+
+td.git .open .git-author-line,
+td.git .open .git-date-line {
+  max-height: 5em;
+}
+
+td.git .open .git-subject-brief {
+  transform: translate(2em, 5em);
+}
+
+td.git .open .git-subject-rest {
+  max-height: 30em;
+}
+
+td.git .git-toggler {
+  margin-top: 3px;
+  margin-bottom: -15px;
+  margin-left: 47%;
+  width: 1.8em;
+  text-align: center;
+  color: lightgrey;
+  background-color: white;
+  box-shadow: 1px 1px 1px grey;
+  transform: scale(1.3,0.7);
+  border-radius: 3px;
+}
+
+td.git:hover .git-toggler {
+  color: black;
+  box-shadow: 1px 1px 3px grey;
+}
+
+td.git .git-toggler .glyphicon {
+  transition: transform 0.6s;
+}
+
+td.git .closed .git-toggler .glyphicon {
+  transform: rotate(180deg);
+}

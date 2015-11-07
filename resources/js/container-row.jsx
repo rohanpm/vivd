@@ -1,6 +1,7 @@
 import React       from 'react';
 import TimeAgo     from 'react-timeago';
 
+import GlyphIcon       from './glyph-icon';
 import ContainerButton from './container-button';
 import MarkedText      from './marked-text';
 
@@ -22,8 +23,101 @@ function shortenedRef(ref) {
   return ref;
 }
 
+function parseGitLog(log) {
+  try {
+/*
+commit ec4ec35961c8606521137d8abc49a6769966e22c
+Author: Rohan McGovern <rohan@mcgovern.id.au>
+Date:   Wed Nov 4 19:47:57 2015 +1000
+
+    Expose git-log in API.
+*/
+    const lines = log.split("\n");
+    const sha1 = lines[0].split(' ')[1];
+    const authorLine = lines[1];
+    const dateLine = lines[2];
+    const subjectBrief = lines[4].trim();
+    const subjectRest = lines.slice(5).join("\n");
+
+    return {sha1, authorLine, dateLine, subjectBrief, subjectRest};
+  } catch (e) {
+    console.log(e);
+    return null;
+  }
+}
+
 export default React.createClass({
-  gitElement: function({'git-ref': ref, 'git-revision': rev, 'git-oneline': oneline}) {
+  getInitialState: function() {
+    return {open: false};
+  },
+
+  toggle: function() {
+    this.setState({open: !this.state.open});
+  },
+
+  gitToggleElement: function() {
+    return (
+      <div className="git-toggler" onClick={this.toggle}>
+        <GlyphIcon icon-type="chevron-up"/>
+      </div>
+    );
+  },
+
+  gitElementFromParsed: function({'git-ref': ref}, {sha1, authorLine, dateLine, subjectBrief, subjectRest}) {
+    const abbrev = shortenedRef(ref);
+    const topClass = this.state.open ? 'open' : 'closed';
+    const subjectRestElem = subjectRest ? (
+      <code>
+        <MarkedText text={subjectRest} mark={this.props.highlight}/>
+      </code>
+    ) : null;
+
+    return (
+      <span className={topClass}>
+        <abbr title={ref}>
+          <MarkedText text={abbrev} mark={this.props.highlight}/>
+        </abbr>
+        <br/>
+        <div className="git-commit-text">
+          <code>
+            commit
+          </code>
+        </div>
+        <div className="git-revision">
+          <code>
+            <MarkedText text={sha1} mark={this.props.highlight}/>
+          </code>
+        </div>
+        <div className="git-subject-brief">
+          <code>
+            <MarkedText text={subjectBrief} mark={this.props.highlight}/>
+          </code>
+        </div>
+        <div className="git-author-line">
+          <code>
+            <MarkedText text={authorLine} mark={this.props.highlight}/>
+          </code>
+        </div>
+        <div className="git-date-line">
+          <code>
+            <MarkedText text={dateLine} mark={this.props.highlight}/>
+          </code>
+        </div>
+        <div className="git-subject-rest">
+          {subjectRestElem}
+        </div>
+        {this.gitToggleElement()}
+      </span>
+    );
+  },
+
+  gitElement: function(params) {
+    const {'git-ref': ref, 'git-revision': rev, 'git-oneline': oneline, 'git-log': log} = params;
+    console.log(log);
+    const parsed = parseGitLog(log);
+    if (parsed) {
+      return this.gitElementFromParsed(params, parsed);
+    }
     const abbrev = shortenedRef(ref);
     const detail = oneline || rev;
 
