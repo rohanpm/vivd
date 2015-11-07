@@ -34,7 +34,7 @@ td.git .git-commit-text {
 }
 
 td.git .git-revision {
-  transition: max-width 0.6s, transform 0.6s;
+  transition: max-width 1s, transform 0.6s;
   position: absolute;
   z-index: 5;
 }
