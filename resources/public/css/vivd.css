@@ -45,6 +45,9 @@ td.git .git-subject-brief {
   text-overflow: ellipsis;
   overflow-x: hidden;
   max-width: 45em;
+
+  /* See comment in git-subject-rest */
+  text-indent: -4px;
 }
 
 td.git .git-author-line,
@@ -58,6 +61,11 @@ td.git .git-subject-rest {
   transition: margin-top 0.6s, max-height 0.6s;
   overflow: hidden;
   white-space: pre;
+
+  /* FIXME: why is this needed??  Without this, text is being rendered 4px
+     indented on the first line unexpectedly. Developer tools show nothing
+     relevant and it's reproducible on Chrome, FF and Opera. */
+  text-indent: -4px;
 }
 
 td.git .closed .git-commit-text {
