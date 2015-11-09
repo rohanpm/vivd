@@ -57,6 +57,7 @@ td.git .git-subject-rest {
   transform: translateX(2em);
   transition: margin-top 0.6s, max-height 0.6s;
   overflow: hidden;
+  white-space: pre;
 }
 
 td.git .closed .git-commit-text {
