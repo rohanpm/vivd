@@ -38,7 +38,7 @@ Date:   Wed Nov 4 19:47:57 2015 +1000
     const authorLine   = lines[1];
     const dateLine     = lines[2];
     const subjectBrief = lines[4].trim();
-    const subjectRest  = lines.slice(6).map(s => s.trim()).join("\n");
+    const subjectRest  = lines.slice(6).map(s => s.trimRight().slice(4)).join("\n");
 
     return {sha1, authorLine, dateLine, subjectBrief, subjectRest};
   } catch (e) {
