@@ -62,6 +62,9 @@ td.git .git-subject-rest {
   overflow: hidden;
   white-space: pre;
 
+  text-overflow: ellipsis;
+  max-width: 45em;
+
   /* FIXME: why is this needed??  Without this, text is being rendered 4px
      indented on the first line unexpectedly. Developer tools show nothing
      relevant and it's reproducible on Chrome, FF and Opera. */
