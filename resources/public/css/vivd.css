@@ -50,13 +50,14 @@ td.git .git-subject-brief {
   text-indent: -4px;
 }
 
-td.git .git-author-line,
-td.git .git-date-line {
+td.git .git-meta {
   transition: max-height 0.6s;
+  white-space: pre;
+  text-indent: -4px;
 }
 
 td.git .git-subject-rest {
-  margin-top: 3.2em;
+  margin-top: 2.1em;
   transform: translateX(2em);
   transition: margin-top 0.6s, max-height 0.6s;
   overflow: hidden;
@@ -85,8 +86,7 @@ td.git .closed .git-subject-brief {
   transform: translateX(5.5em);
 }
 
-td.git .closed .git-author-line,
-td.git .closed .git-date-line {
+td.git .closed .git-meta {
   max-height: 0em;
   overflow: hidden;
 }
@@ -106,8 +106,7 @@ td.git .open .git-revision {
   transform: translateX(4em);
 }
 
-td.git .open .git-author-line,
-td.git .open .git-date-line {
+td.git .open .git-meta {
   max-height: 5em;
 }
 

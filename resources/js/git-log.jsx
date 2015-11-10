@@ -33,14 +33,21 @@ Date:   Wed Nov 4 19:47:57 2015 +1000
 
     Expose git-log in API.
 */
-    const lines        = log.split("\n");
+    var lines          = log.split("\n");
     const sha1         = lines[0].split(' ')[1];
-    const authorLine   = lines[1];
-    const dateLine     = lines[2];
-    const subjectBrief = lines[4].trim();
-    const subjectRest  = lines.slice(6).map(s => s.trimRight().slice(4)).join("\n");
+    lines              = lines.slice(1);
 
-    return {sha1, authorLine, dateLine, subjectBrief, subjectRest};
+    const blankIdx     = lines.findIndex(s => (s == ""));
+    // Cheat.  It's hard to make it look good with >2 lines of meta,
+    // so keep a max of 2
+    const meta         = lines.slice(0, blankIdx).slice(-2).join("\n");
+
+    lines              = lines.slice(blankIdx + 1);
+    
+    const subjectBrief = lines[0].trimRight().slice(4);
+    const subjectRest  = lines.slice(1).map(s => s.trimRight().slice(4)).join("\n");
+
+    return {sha1, meta, subjectBrief, subjectRest};
   } catch (e) {
     console.log(e);
     return null;
@@ -55,7 +62,7 @@ export default React.createClass({
             open:         parsed ? this.calculateOpen(parsed) : false};
   },
 
-  calculateOpen: function({sha1, subjectBrief, authorLine, dateLine, subjectRest}) {
+  calculateOpen: function({sha1, subjectBrief, meta, subjectRest}) {
     const h = this.props.highlight;
     if (!h) {
       return false;
@@ -67,8 +74,7 @@ export default React.createClass({
       return false;
     }
 
-    return (authorLine.toLowerCase().includes(hl) ||
-            dateLine.toLowerCase().includes(hl) ||
+    return (meta.toLowerCase().includes(hl) ||
             subjectRest.toLowerCase().includes(hl));
   },
 
@@ -99,7 +105,7 @@ export default React.createClass({
   gitElementParsed: function() {
     const abbrev   = shortenedRef(this.props.gitRef);
     const topClass = this.state.open ? 'open' : 'closed';
-    const {sha1, authorLine, dateLine, subjectBrief, subjectRest}
+    const {sha1, meta, subjectBrief, subjectRest}
       = this.state.parsedGitLog;
 
     return (
@@ -123,14 +129,9 @@ export default React.createClass({
             <MarkedText text={subjectBrief} mark={this.props.highlight}/>
           </code>
         </div>
-        <div className="git-author-line">
+        <div className="git-meta">
           <code>
-            <MarkedText text={authorLine} mark={this.props.highlight}/>
-          </code>
-        </div>
-        <div className="git-date-line">
-          <code>
-            <MarkedText text={dateLine} mark={this.props.highlight}/>
+            <MarkedText text={meta} mark={this.props.highlight}/>
           </code>
         </div>
         <div className="git-subject-rest">
